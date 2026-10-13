@@ -5,7 +5,7 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR "this mod only supports x64 builds")
 endif ()
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_UNITY_BUILD ON)
@@ -76,14 +76,14 @@ CPMAddPackage(
         OPTIONS "KIERO_INCLUDE_D3D11 ON" "KIERO_INCLUDE_D3D12 ON" "KIERO_BUILD_EXAMPLES OFF"
 )
 
-set_property(TARGET libhat kiero minhook PROPERTY UNITY_BUILD FALSE)
+set_property(TARGET libhat kiero spdlog minhook PROPERTY UNITY_BUILD FALSE)
 
 if(MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_compile_options(/Od /Zi /JMC /MP /bigobj /Zc:inline /EHsc /permissive-)
+        add_compile_options(/Od /Zi /JMC /bigobj /Zc:inline /EHsc /permissive-)
         add_link_options(/DEBUG:FULL /INCREMENTAL)
     else()
-        add_compile_options(/O2 /GL /MP /bigobj /EHsc /permissive-)
+        add_compile_options(/O2 /GL /bigobj /EHsc /permissive-)
         add_link_options(/LTCG)
     endif()
 endif()
@@ -92,7 +92,8 @@ endif()
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 add_compile_definitions(__MODE_LIBRARY)
 add_library(CppSystemsTest SHARED src/main.cpp
-        src/events/keyboard_event.hpp)
+        src/events/keyboard_event.hpp
+        tools/injector/injector.cpp)
 # add_executable(CppSystemsTest src/main.cpp)
 
 target_sources(CppSystemsTest PRIVATE
@@ -126,8 +127,6 @@ target_sources(CppSystemsTest PRIVATE
         src/system/hooks/mouse_hook.cpp
         src/system/hooks/mouse_hook.hpp
 
-
-
         src/system/signatures/basic_signature_system.hpp
         src/system/signatures/game_signatures.hpp
         src/system/signatures/sig.hpp
@@ -137,17 +136,16 @@ target_sources(CppSystemsTest PRIVATE
         src/util/memory.hpp
 )
 
-if (MSVC)
-    target_compile_options(CppSystemsTest PRIVATE /std:c++latest)
-else()
-    set_target_properties(CppSystemsTest PROPERTIES CXX_STANDARD 26)
-endif()
+target_compile_options(CppSystemsTest PRIVATE -Wno-c++26-extensions)
+set_target_properties(CppSystemsTest PROPERTIES CXX_STANDARD 26)
 
 target_include_directories(CppSystemsTest PRIVATE src)
 
-target_link_libraries(CppSystemsTest PRIVATE glm spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook Wintrust.lib Ole32.lib runtimeobject.lib)
+target_link_libraries(CppSystemsTest PRIVATE glm spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook runtimeobject.lib)
 
 set_property(TARGET CppSystemsTest spdlog magic_enum glm libhat minhook PROPERTY MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDLL>$<$<CONFIG:Release>:MultiThreaded>")
 
 target_precompile_headers(CppSystemsTest PRIVATE "src/pch.hpp")
 
+add_subdirectory(tools/injector)
+add_dependencies(CppSystemsTest injector)

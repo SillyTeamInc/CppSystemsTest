@@ -16,6 +16,7 @@ public:
     }
 
     void on_mouse_event(moused_event& event) {
+        if (event.action_button_id == 0) return;
         spdlog::info("mouse event received, x: {}, y: {}, dx: {}, dy: {}, actionButtonId: {}, buttonData: {}, forceMotionlessPointer: {}",
                      event.x, event.y, event.dx, event.dy, event.action_button_id, event.button_data, event.force_motionless_pointer);
     }

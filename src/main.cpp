@@ -45,10 +45,6 @@ void main_thread(HMODULE hModule) {
     manager->shutdown_systems();
 
     spdlog::info("All cleaned up, cya!");
-
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
     core::shutdown_logging();
     FreeLibraryAndExitThread(hModule, 0);
 }

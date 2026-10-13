@@ -142,7 +142,7 @@ namespace hvs {
             auto& ch = get_or_create(type);
             std::lock_guard lock(ch.mutex);
             auto next = std::make_shared<entry_list>(*ch.entries);
-            const auto pos = std::find_if(next->begin(), next->end(), [&](const entry& other) {
+            const auto pos = std::ranges::find_if(*next, [&](const entry& other) {
                 return other.prio < e.prio;
             });
             next->insert(pos, std::move(e));

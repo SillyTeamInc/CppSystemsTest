@@ -17,6 +17,7 @@ public:
     bool transition_state;
     bool is_down;
     bool is_system_key;
+    [[nodiscard]] bool is_repeated() const { return previous_key_state && is_down; }
 
     keyboard_event(
         HWND window,
