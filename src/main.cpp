@@ -1,7 +1,7 @@
 #include <iostream>
 #include <windows.h>
 
-#include "core/log.hpp"
+#include "core/core.hpp"
 #include "hvs/hvs.hpp"
 #include "system/systems_manager.hpp"
 #include "system/complex_system.hpp"

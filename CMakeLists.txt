@@ -94,13 +94,12 @@ add_compile_definitions(__MODE_LIBRARY)
 add_library(CppSystemsTest SHARED src/main.cpp
         src/events/keyboard_event.hpp
         tools/injector/injector.cpp)
-# add_executable(CppSystemsTest src/main.cpp)
 
 target_sources(CppSystemsTest PRIVATE
         src/pch.hpp
 
-        src/core/log.cpp
-        src/core/log.hpp
+        src/core/core.cpp
+        src/core/core.hpp
 
         src/hvs/hvs.hpp
 

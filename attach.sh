@@ -26,5 +26,6 @@ if [ ! -x "$GDBSERVER" ]; then
     GDBSERVER="$(command -v gdbserver)"
 fi
 
-setsid nohup "$GDBSERVER" --attach :12346 "$PID" > /tmp/gdbserver.log 2>&1 &
+setsid nohup "$GDBSERVER" --once --attach :12346 "$PID" > /tmp/gdbserver.log 2>&1 &
 sleep 1
+echo "server should be listening on port 12346"
