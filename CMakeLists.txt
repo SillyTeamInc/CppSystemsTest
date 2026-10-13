@@ -28,17 +28,6 @@ endif()
 
 include(${CPM_DOWNLOAD_LOCATION})
 
-set(GAMEINPUT_DOWNLOAD_LOCATION "${CMAKE_BINARY_DIR}/gameinput/GameInput.h")
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/gameinput")
-if (NOT EXISTS "${GAMEINPUT_DOWNLOAD_LOCATION}")
-    message(STATUS "Downloading GameInput.h")
-    file(DOWNLOAD
-            https://raw.githubusercontent.com/microsoftconnect/GameInput/refs/heads/main/include/v2/GameInput.h
-            ${GAMEINPUT_DOWNLOAD_LOCATION}
-    )
-endif()
-
-
 CPMAddPackage(
         NAME spdlog
         GITHUB_REPOSITORY gabime/spdlog
@@ -154,9 +143,9 @@ else()
     set_target_properties(CppSystemsTest PROPERTIES CXX_STANDARD 26)
 endif()
 
-target_include_directories(CppSystemsTest PRIVATE src "${CMAKE_BINARY_DIR}/gameinput")
+target_include_directories(CppSystemsTest PRIVATE src)
 
-target_link_libraries(CppSystemsTest PRIVATE glm spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook Wintrust.lib Ole32.lib runtimeobject.lib GameInput)
+target_link_libraries(CppSystemsTest PRIVATE glm spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook Wintrust.lib Ole32.lib runtimeobject.lib)
 
 set_property(TARGET CppSystemsTest spdlog magic_enum glm libhat minhook PROPERTY MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDLL>$<$<CONFIG:Release>:MultiThreaded>")
 

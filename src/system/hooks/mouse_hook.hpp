@@ -4,7 +4,6 @@
 #pragma once
 
 #include <cstdint>
-#include <GameInput.h>
 
 #include "system/hooks/base/hook.hpp"
 

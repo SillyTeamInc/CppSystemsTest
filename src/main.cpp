@@ -11,7 +11,6 @@
 #include "system/features/feature_system.hpp"
 #include "system/signatures/basic_signature_system.hpp"
 #include "system/hooks/base/hooks.hpp"
-#include <GameInput.h>
 
 #include "system/hooks/base/hook_system.hpp"
 

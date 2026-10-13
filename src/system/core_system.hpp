@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <kiero.hpp>
 #include <winrt/base.h>
-#include <GameInput.h>
 
 #include "event_system.hpp"
 #include "events/keyboard_event.hpp"

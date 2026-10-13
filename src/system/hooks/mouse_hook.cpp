@@ -4,7 +4,6 @@
 
 #include "system/hooks/mouse_hook.hpp"
 
-#include <GameInput.h>
 #include <kiero/detail/magic_vtable.hpp>
 #include <winrt/base.h>
 
