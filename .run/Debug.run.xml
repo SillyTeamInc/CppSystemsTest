@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Debug" type="CLion_Remote" version="1" toolchain="Clang-cl" remoteCommand="localhost:12346" symbolFile="$ProjectFileDir$/cmake-build-debug/CppSystemsTest.dll" sysroot="">
+    <debugger kind="GDB" isBundled="true" />
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Start Debug Server" run_configuration_type="CLionNativeAppRunConfigurationType" />
+    </method>
+  </configuration>
+</component>
