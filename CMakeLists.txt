@@ -80,8 +80,8 @@ set_property(TARGET libhat kiero spdlog minhook PROPERTY UNITY_BUILD FALSE)
 
 if(MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_compile_options(/Od /Zi /JMC /bigobj /Zc:inline /EHsc /permissive-)
-        add_link_options(/DEBUG:FULL /INCREMENTAL)
+        add_compile_options(/Od /clang:-g /clang:-gdwarf-4 /JMC /bigobj /Zc:inline /EHsc /permissive-)
+        add_link_options(/DEBUG:FULL /INCREMENTAL /DEBUG:DWARF)
     else()
         add_compile_options(/O2 /GL /bigobj /EHsc /permissive-)
         add_link_options(/LTCG)
@@ -137,6 +137,7 @@ target_sources(CppSystemsTest PRIVATE
 )
 
 target_compile_options(CppSystemsTest PRIVATE -Wno-c++26-extensions)
+target_link_options(CppSystemsTest PRIVATE /DYNAMICBASE:NO /BASE:0x180000000)
 set_target_properties(CppSystemsTest PROPERTIES CXX_STANDARD 26)
 
 target_include_directories(CppSystemsTest PRIVATE src)
