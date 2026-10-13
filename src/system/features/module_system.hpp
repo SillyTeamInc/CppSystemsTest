@@ -7,6 +7,7 @@
 
 #include "events/moused_event.hpp"
 #include "events/keyboard_event.hpp"
+#include <spdlog/spdlog.h> // For some reason the pch doesn't get included with intellisense or whatever very epic
 
 class module_system : public generic_system {
 

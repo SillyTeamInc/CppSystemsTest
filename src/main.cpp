@@ -14,8 +14,6 @@
 
 #include "system/hooks/base/hook_system.hpp"
 
-// i don't know how to dev for this on linux so i have to use a vm running on a 3rd gen i7-3770s give me mercy
-
 void main_thread(HMODULE hModule) {
     core::init_logging(spdlog::level::trace);
     spdlog::info("hello world!!!");
