@@ -1,7 +1,7 @@
 #include <iostream>
 #include <windows.h>
 
-#include "core/core.hpp"
+#include "core/logging.hpp"
 #include "hvs/hvs.hpp"
 #include "system/systems_manager.hpp"
 #include "system/complex_system.hpp"
@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/core.hpp"
 #include "sdk/mc/deps/application/gamecore/Platform_GameCore.hpp"
 #include "sdk/mc/deps/application/gamecore/WinMain.hpp"
 #include "sdk/mc/deps/application/gamecore/AppPlatform_GameCore.hpp"
@@ -26,7 +27,7 @@
 #include "sdk/mc/client/game/MinecraftGame.hpp"
 
 void main_thread(HMODULE hModule) {
-    core::init_logging(spdlog::level::trace);
+    core::logging::init(spdlog::level::trace);
     spdlog::info("hello world!!!");
 
     const auto manager = systems_manager::i();
@@ -61,7 +62,7 @@ void main_thread(HMODULE hModule) {
     manager->shutdown_systems();
 
     spdlog::info("All cleaned up, cya!");
-    core::shutdown_logging();
+    core::logging::shutdown();
     FreeLibraryAndExitThread(hModule, 0);
 }
 

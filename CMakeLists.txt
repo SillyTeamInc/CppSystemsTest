@@ -100,13 +100,15 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/sdk/mc/deps/application/gamecore/AppPlatform_GameCore.hpp
         src/sdk/mc/client/game/MinecraftGame.hpp
         src/sdk/mc/deps/application/gamecore/GameHolder.hpp
-        src/sdk/mc/client/game/ClientInstance.hpp)
+        src/sdk/mc/client/game/ClientInstance.hpp
+        src/core/core.cpp
+        src/core/core.hpp)
 
 target_sources(CppSystemsTest PRIVATE
         src/pch.hpp
 
-        src/core/core.cpp
-        src/core/core.hpp
+        src/core/logging.cpp
+        src/core/logging.hpp
 
         src/hvs/hvs.hpp
 
