@@ -3,6 +3,20 @@
 //
 #pragma once
 
+#define SDK_FIELD(name, offset, ...)                                                               \
+    [[nodiscard]] __VA_ARGS__& get_##name() const {                                                \
+        return *reinterpret_cast<__VA_ARGS__*>(reinterpret_cast<std::uintptr_t>(this) + (offset)); \
+    }                                                                                              \
+    void set_##name(__VA_ARGS__& value) const {                                              \
+        get_##name() = value;                                                                      \
+    }                                                                                              \
+    __declspec(property(get = get_##name, put = set_##name)) __VA_ARGS__ name
+
+#define SDK_FIELD_ADDR(name, offset, ...)                                                         \
+    [[nodiscard]] __VA_ARGS__* name() {                                                           \
+        return reinterpret_cast<__VA_ARGS__*>(reinterpret_cast<std::uintptr_t>(this) + (offset)); \
+    }
+
 namespace util::memory {
     template<typename Ret, typename... Args>
     static Ret call_func(uintptr_t func_addr, Args... args) {

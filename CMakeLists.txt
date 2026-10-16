@@ -93,7 +93,14 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 add_compile_definitions(__MODE_LIBRARY)
 add_library(CppSystemsTest SHARED src/main.cpp
         src/events/keyboard_event.hpp
-        tools/injector/injector.cpp)
+        tools/injector/injector.cpp
+        src/sdk/mc/deps/application/gamecore/Platform_GameCore.hpp
+        src/sdk/mc/deps/application/gamecore/WinMain.hpp
+        src/core/sdk_base.hpp
+        src/sdk/mc/deps/application/gamecore/AppPlatform_GameCore.hpp
+        src/sdk/mc/client/game/MinecraftGame.hpp
+        src/sdk/mc/deps/application/gamecore/GameHolder.hpp
+        src/sdk/mc/client/game/ClientInstance.hpp)
 
 target_sources(CppSystemsTest PRIVATE
         src/pch.hpp

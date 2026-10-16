@@ -9,11 +9,26 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/ansicolor_sink.h>
 #include <spdlog/sinks/ansicolor_sink-inl.h>
+#include <sdk/mc/client/game/ClientInstance.hpp>
+#include <sdk/mc/client/game/MinecraftGame.hpp>
+#include <sdk/mc/deps/application/gamecore/WinMain.hpp>
+#include <sdk/mc/deps/application/gamecore/Platform_GameCore.hpp>
+#include <sdk/mc/deps/application/gamecore/GameHolder.hpp>
+
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
 namespace core {
+    MinecraftGame* get_minecraft_game() {
+        return MainGameCore::WinMain::get()->mPlatform->mHolder->mGame;
+    }
+
+    ClientInstance* get_client_instance() {
+        return MainGameCore::WinMain::get()->mPlatform->mHolder->mGame->getPrimaryClientInstance();
+    }
+
     namespace {
         std::shared_ptr<spdlog::logger> g_logger;
         FILE* g_log_file = nullptr;
@@ -103,6 +118,7 @@ namespace core {
 
         spdlog::set_default_logger(g_logger);
     }
+
 
     void shutdown_logging() {
         spdlog::debug("Deinitializing logging");

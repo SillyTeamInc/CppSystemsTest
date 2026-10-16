@@ -55,8 +55,10 @@ namespace sig::detail {
                 const auto value = static_cast<const field_t*>(p)->value();
                 if constexpr (std::is_same_v<typename field_t::value_type, std::uintptr_t>) {
                     return util::memory::get_memory_string(value);
+                } else if constexpr (std::is_integral_v<typename field_t::value_type>) {
+                    return fmt::format("0x{:X}", value);
                 } else {
-                    return std::to_string(value);
+                    return fmt::format("{}", value);
                 }
             },
             [](void* p) { static_cast<field_t*>(p)->reset(); }
@@ -119,9 +121,13 @@ public:
         spdlog::info("Scanning {} signatures in {}", m_leaves.size(), m_section);
 
         const auto procmod = hat::process::get_process_module();
+        auto startTime = std::chrono::high_resolution_clock::now();
         std::for_each(std::execution::par, m_leaves.begin(), m_leaves.end(), [&](sig::detail::leaf& l) {
             l.scan(l.object, procmod, m_section);
         });
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        spdlog::info("Finished scanning in {} ms", duration.count());
 
         for (const auto& l : m_leaves) {
             if (l.found(l.object)) {

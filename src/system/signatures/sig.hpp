@@ -34,6 +34,7 @@ namespace sig {
 
         [[nodiscard]] bool found() const {return m_found;}
         [[nodiscard]] value_t value() const {return m_value;}
+        [[nodiscard]] value_t v() const {return m_value;}
         // implicit conversion makes this so epic
         operator value_t() const { return m_value; }
 

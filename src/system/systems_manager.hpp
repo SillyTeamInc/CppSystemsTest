@@ -18,8 +18,14 @@ class systems_manager {
     void unindex(generic_system& s);
 
 public:
+    static std::unique_ptr<systems_manager> s_instance;
+    static systems_manager* i();
+    static void destroy_instance();
+
     systems_manager() = default;
     ~systems_manager();
+
+
     systems_manager(const systems_manager&) = delete;
     systems_manager& operator=(const systems_manager&) = delete;
 

@@ -10,6 +10,19 @@ systems_manager::~systems_manager() {
     shutdown_systems();
 }
 
+std::unique_ptr<systems_manager> systems_manager::s_instance = nullptr;
+
+systems_manager* systems_manager::i() {
+    if (!s_instance) {
+        s_instance = std::make_unique<systems_manager>();
+    }
+    return s_instance.get();
+}
+
+void systems_manager::destroy_instance() {
+    s_instance.reset();
+}
+
 void systems_manager::initialize_systems() const {
     for (auto& system: m_owned) {
         //spdlog::info("initializing system: {}", typeid(*system).name());

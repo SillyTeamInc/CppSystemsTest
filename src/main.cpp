@@ -14,30 +14,48 @@
 
 #include "system/hooks/base/hook_system.hpp"
 
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include "sdk/mc/deps/application/gamecore/Platform_GameCore.hpp"
+#include "sdk/mc/deps/application/gamecore/WinMain.hpp"
+#include "sdk/mc/deps/application/gamecore/AppPlatform_GameCore.hpp"
+#include "sdk/mc/deps/application/gamecore/GameHolder.hpp"
+#include "sdk/mc/client/game/MinecraftGame.hpp"
+
 void main_thread(HMODULE hModule) {
     core::init_logging(spdlog::level::trace);
     spdlog::info("hello world!!!");
 
-    // Wait for debugger to attach
-    /*while (!IsDebuggerPresent()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }*/
-
-    const auto manager = std::make_unique<systems_manager>();
-
+    const auto manager = systems_manager::i();
     auto* coreSys = manager->add_system<core_system>(hModule);
 
-    manager->add_system<event_system>(); // the dispatcher is available at add time heres :3
+    auto* eventSys = manager->add_system<event_system>(); // the dispatcher is available at add time heres :3
     auto* sigSys = manager->add_system<signature_system>();
     manager->add_system<hook_system>();
     manager->add_system<feature_system>();
 
     manager->initialize_systems();
+
     spdlog::info("getLocalPlayer addr={:X}", sigSys->sigs().ClientInstance.getLocalPlayer.value());
 
+    MainGameCore::WinMain* winMain = MainGameCore::WinMain::get();
+    Bedrock::Platform_GameCore* platform = winMain->mPlatform;
+    Bedrock::GameHolder* holder = platform->mHolder;
+    MinecraftGame* game = holder->mGame;
+    ClientInstance* ci = game->getPrimaryClientInstance();
+    spdlog::info("MainGameCore::WinMain instance={:X}", reinterpret_cast<std::uintptr_t>(winMain));
+    spdlog::info("Bedrock::Platform_GameCore mPlatform_Shim={:X}", reinterpret_cast<std::uintptr_t>(platform));
+    spdlog::info("Bedrock::GameHolder mGame={:X}", reinterpret_cast<std::uintptr_t>(holder));
+    spdlog::info("MinecraftGame instance={:X}", reinterpret_cast<std::uintptr_t>(game));
+    spdlog::info("ClientInstance={:X}", reinterpret_cast<std::uintptr_t>(ci));
+    spdlog::info("ClientInstance from core={:X}", reinterpret_cast<std::uintptr_t>(core::get_client_instance()));
+    spdlog::info("press end to eject the dll");
 
     while (!coreSys->m_eject_requested) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     manager->shutdown_systems();
