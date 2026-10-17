@@ -57,12 +57,18 @@ void main_thread(HMODULE hModule) {
     spdlog::info("ClientInstance from core={:X}", reinterpret_cast<std::uintptr_t>(core::get_client_instance()));
     spdlog::info("press end to eject the dll");
 
-    void* previousLp = nullptr;
-    
+    void* lp = nullptr;
+
     spdlog::info("IClientInstance::tick index={:X}", kiero::detail::magic_vft::vtable_index<&IClientInstance::tick>());
 
 
+
     while (!coreSys->m_eject_requested) {
+        auto l = ci->getLocalPlayer();
+        if (lp != l) {
+            lp = l;
+            spdlog::info("localPlayer is now {:X}", reinterpret_cast<std::uintptr_t>(l));
+        }
         // kinda stupid but whatever
         eventSys->dispatcher().post(mod_tick_event());
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
