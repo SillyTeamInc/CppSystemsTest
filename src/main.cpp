@@ -59,7 +59,7 @@ void main_thread(HMODULE hModule) {
 
     void* lp = nullptr;
 
-    spdlog::info("IClientInstance::tick index={:X}", kiero::detail::magic_vft::vtable_index<&IClientInstance::tick>());
+    //spdlog::info("IClientInstance::tick index={:X}", kiero::detail::magic_vft::vtable_index<&IClientInstance::tick>());
 
 
 
