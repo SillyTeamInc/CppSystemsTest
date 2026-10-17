@@ -3,7 +3,7 @@ a simple test of systems to make things cleaner.
 for minecraft bedrock 1.26.52.
 ## highlights
 includes hookless ClientInstance method for ease of access
-
+easily extensible via the systems_manager and feature_managers.
 ## Things used/References
 (used either in-part, based off, or directly, libs included. copies from my own stuff aren't included)
 - https://github.com/gabime/spdlog

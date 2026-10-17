@@ -12,10 +12,11 @@
     }                                                                                              \
     __declspec(property(get = get_##name, put = set_##name)) __VA_ARGS__ name
 
-#define SDK_FIELD_ADDR(name, offset, ...)                                                         \
-    [[nodiscard]] __VA_ARGS__* name() {                                                           \
-        return reinterpret_cast<__VA_ARGS__*>(reinterpret_cast<std::uintptr_t>(this) + (offset)); \
-    }
+#define TOKENPASTE(x, y) x ## y
+#define TOKENPASTE2(x, y) TOKENPASTE(x, y)
+#define VIRT_PAD private: \
+    virtual void TOKENPASTE2(padding_, __LINE__)() = 0; \
+    public: \
 
 namespace util::memory {
     template<typename Ret, typename... Args>

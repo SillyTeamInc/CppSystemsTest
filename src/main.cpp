@@ -20,6 +20,8 @@
 #include <vector>
 
 #include "core/core.hpp"
+#include "events/mod_tick_event.hpp"
+#include "sdk/mc/client/game/ClientInstance.hpp"
 #include "sdk/mc/deps/application/gamecore/Platform_GameCore.hpp"
 #include "sdk/mc/deps/application/gamecore/WinMain.hpp"
 #include "sdk/mc/deps/application/gamecore/AppPlatform_GameCore.hpp"
@@ -55,8 +57,15 @@ void main_thread(HMODULE hModule) {
     spdlog::info("ClientInstance from core={:X}", reinterpret_cast<std::uintptr_t>(core::get_client_instance()));
     spdlog::info("press end to eject the dll");
 
+    void* previousLp = nullptr;
+    
+    spdlog::info("IClientInstance::tick index={:X}", kiero::detail::magic_vft::vtable_index<&IClientInstance::tick>());
+
+
     while (!coreSys->m_eject_requested) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        // kinda stupid but whatever
+        eventSys->dispatcher().post(mod_tick_event());
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     manager->shutdown_systems();

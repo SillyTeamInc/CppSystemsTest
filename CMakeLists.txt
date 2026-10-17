@@ -102,7 +102,15 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/sdk/mc/deps/application/gamecore/GameHolder.hpp
         src/sdk/mc/client/game/ClientInstance.hpp
         src/core/core.cpp
-        src/core/core.hpp)
+        src/core/core.hpp
+        src/events/module_state_change_event.hpp
+        src/system/features/modules/module.cpp
+        src/system/features/modules/module.hpp
+        src/util/hash.hpp
+        src/system/features/modules/module_system.cpp
+        src/system/features/modules/misc/test_module.cpp
+        src/system/features/modules/misc/test_module.hpp
+        src/events/mod_tick_event.hpp)
 
 target_sources(CppSystemsTest PRIVATE
         src/pch.hpp
@@ -122,7 +130,7 @@ target_sources(CppSystemsTest PRIVATE
         src/events/moused_event.hpp
 
         src/system/features/feature_system.hpp
-        src/system/features/module_system.hpp
+        src/system/features/modules/module_system.hpp
 
         src/system/hooks/base/detour.cpp
         src/system/hooks/base/detour.hpp

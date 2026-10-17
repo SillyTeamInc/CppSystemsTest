@@ -19,6 +19,10 @@ public:
 
     ClientInstance* getPrimaryClientInstance() {
         // technically inaccurate since im supposed to check ci->isPrimaryClient() as well but who cares
+        if (mClientInstances.empty()) {
+            spdlog::warn("MinecraftGame::getPrimaryClientInstance() called but mClientInstances is empty");
+            return nullptr;
+        }
         return mClientInstances.begin()->second.mClientInstance.get();
     }
 };

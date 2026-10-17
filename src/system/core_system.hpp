@@ -76,7 +76,6 @@ public:
 
         wndProcOld = SetWindowLongPtrA(m_window_handle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&wndProcHook));
         spdlog::info("wndproc hooked for keyboard input");
-
     };
 
     void shutdown() override {

@@ -22,6 +22,7 @@
 #include "sig.hpp"
 #include "system/generic_system.hpp"
 #include "game_signatures.hpp"
+#include "core/core.hpp"
 
 namespace sig::detail {
     template<typename field_t>
@@ -94,7 +95,6 @@ namespace sig::detail {
 
 template<typename Signatures>
 class basic_signature_system : public generic_system {
-private:
     Signatures m_sigs{};
     std::vector<sig::detail::leaf> m_leaves;
     std::string m_section;
@@ -138,6 +138,24 @@ public:
         }
 
         spdlog::info("{}/{} sigs found", resolved_count(), m_leaves.size());
+
+        // todo: this is fucking stupid. workaround for ci
+        //       being null if you inject too soon.
+        //       yea its stupid but it does work and thats whats important so fuck it
+        bool msg = false;
+        if (core::get_client_instance() == nullptr) {
+            if (!msg) {
+                spdlog::error("ClientInstance is null, this is a problem");
+                msg = true;
+            }
+
+            while (core::get_client_instance() == nullptr) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        }
+
+        if (msg) spdlog::info("ci is no longer null");
+
     }
 
     void shutdown() override {
