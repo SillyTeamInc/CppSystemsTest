@@ -8,6 +8,7 @@
 #include "system/systems_manager.hpp"
 #include "events/keyboard_event.hpp"
 #include "events/mod_tick_event.hpp"
+#include "misc/sprint.hpp"
 
 hvs::event_dispatcher & module_system::dispatcher() const {
     return manager->get<event_system>()->dispatcher();
@@ -18,6 +19,7 @@ void module_system::initialize() {
 
     // modules
     add<test_module>();
+    add<sprint>();
 
     for (const auto& module : modules) {
         module->on_manager_init();
@@ -28,6 +30,7 @@ void module_system::initialize() {
             module->m_wanted_state = true;
 
             module->on_enable();
+            spdlog::info("default-enabled module {}", module->get_name());
         }
     }
 

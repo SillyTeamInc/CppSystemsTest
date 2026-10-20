@@ -7,6 +7,9 @@
 #include <MinHook.h>
 #include <spdlog/spdlog.h>
 
+#include "events/mod_tick_event.hpp"
+#include "system/event_system.hpp"
+
 bool hook_system_base::init_minhook() {
     if (const auto status = MH_Initialize(); status != MH_OK) {
         spdlog::error("MinHook failed to initialize: {}", MH_StatusToString(status));
@@ -24,24 +27,27 @@ void hook_system_base::initialize_subsystems() {
     }
 }
 
+
 void hook_system_base::initialize() {
     complex_system::initialize();
 
     std::size_t installed = 0;
+    m_pending = 0;
     for (auto* hook : m_hooks) {
-        if (!hook->installed()) {
-            continue;
-        }
-        ++installed;
-        if (hook->start_enabled()) {
-            hook->set_enabled(true);
-        }
+        if (hook->installed()) {
+            ++installed;
+            if (hook->start_enabled()) hook->set_enabled(true);
+        } else if (hook->state() == hook_state::pending)
+            ++m_pending;
     }
 
-    spdlog::info("{}/{} hooks installed", installed, m_hooks.size());
+    spdlog::info("{}/{} hooks installed, {} pending", installed, m_hooks.size(), m_pending);
+    if (m_pending > 0) start_listening();
 }
 
 void hook_system_base::shutdown() {
+    stop_listening();
+
     complex_system::shutdown();
     m_hooks.clear();
 
@@ -54,4 +60,34 @@ void hook_system_base::shutdown() {
 
 void hook_system_base::shutdown_subsystems() {
 
+}
+
+void hook_system_base::on_mod_tick(mod_tick_event&) {
+    if (m_pending == 0) return;
+
+    for (auto* hook : m_hooks) {
+        if (hook->state() != hook_state::pending) continue;
+
+        if (hook->try_install()) {
+            --m_pending;
+            if (hook->start_enabled()) hook->set_enabled(true);
+        } else if (hook->state() == hook_state::failed) {
+            --m_pending;
+        }
+    }
+
+    if (m_pending == 0) spdlog::info("all hooks installed!!");
+}
+
+void hook_system_base::start_listening() {
+    if (m_listening) return;
+    m_listening = true;
+    manager->get<event_system>()->dispatcher().listen<mod_tick_event, &hook_system_base::on_mod_tick>(this);
+}
+
+void hook_system_base::stop_listening() {
+    if (!m_listening) return;
+
+    manager->get<event_system>()->dispatcher().deafen<mod_tick_event, &hook_system_base::on_mod_tick>(this);
+    m_listening = false;
 }

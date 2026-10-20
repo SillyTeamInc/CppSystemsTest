@@ -5,6 +5,11 @@
 #include <Windows.h>
 //converts raw pointer to base+offset, if the provided address is not in a module, it will return the address in hex
 namespace util::memory {
+    uintptr_t get_virtual_func(void *_this, int index) {
+        const auto vtable = *static_cast<uintptr_t**>(_this);
+        return vtable[index];
+    }
+
     std::string get_memory_string(uintptr_t addr) {
         MEMORY_BASIC_INFORMATION mbi;
         if(VirtualQuery(reinterpret_cast<void*>(addr), &mbi, sizeof(mbi)))

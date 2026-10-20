@@ -1,16 +1,19 @@
 #include <iostream>
+
+
+
 #include <windows.h>
 
 #include "core/logging.hpp"
 #include "hvs/hvs.hpp"
-#include "system/systems_manager.hpp"
 #include "system/complex_system.hpp"
 #include "system/core_system.hpp"
-#include "system/generic_system.hpp"
 #include "system/event_system.hpp"
+#include "system/generic_system.hpp"
+#include "system/systems_manager.hpp"
 #include "system/features/feature_system.hpp"
-#include "system/signatures/basic_signature_system.hpp"
 #include "system/hooks/base/hooks.hpp"
+#include "system/signatures/basic_signature_system.hpp"
 
 #include "system/hooks/base/hook_system.hpp"
 
@@ -19,14 +22,17 @@
 #include <utility>
 #include <vector>
 
-#include "core/core.hpp"
+#include <core/core.hpp>
 #include "events/mod_tick_event.hpp"
 #include "sdk/mc/client/game/ClientInstance.hpp"
-#include "sdk/mc/deps/application/gamecore/Platform_GameCore.hpp"
-#include "sdk/mc/deps/application/gamecore/WinMain.hpp"
+#include "sdk/mc/client/game/MinecraftGame.hpp"
 #include "sdk/mc/deps/application/gamecore/AppPlatform_GameCore.hpp"
 #include "sdk/mc/deps/application/gamecore/GameHolder.hpp"
-#include "sdk/mc/client/game/MinecraftGame.hpp"
+#include "sdk/mc/deps/application/gamecore/Platform_GameCore.hpp"
+#include "sdk/mc/deps/application/gamecore/WinMain.hpp"
+#include "sdk/mc/entity/components/MoveInputComponent.hpp"
+#include "sdk/mc/world/actor/Actor.hpp"
+#include "sdk/mc/options/IOptionsReader.hpp"
 
 void main_thread(HMODULE hModule) {
     core::logging::init(spdlog::level::trace);
@@ -41,6 +47,11 @@ void main_thread(HMODULE hModule) {
     manager->add_system<feature_system>();
 
     manager->initialize_systems();
+
+    entt::type_hash<MoveInputComponent> typehash = entt::type_hash<MoveInputComponent>();
+    constexpr auto stripped = entt::internal::stripped_type_name<MoveInputComponent>();
+    spdlog::info("stripped type name: " + std::string(stripped));
+    spdlog::info("type hash of MoveInputComponent: {:X}", typehash.value());
 
     spdlog::info("getLocalPlayer addr={:X}", sigSys->sigs().ClientInstance.getLocalPlayer.value());
 
@@ -59,7 +70,7 @@ void main_thread(HMODULE hModule) {
 
     void* lp = nullptr;
 
-    //spdlog::info("IClientInstance::tick index={:X}", kiero::detail::magic_vft::vtable_index<&IClientInstance::tick>());
+    spdlog::info("IClientInstance::tick index={:X}", kiero::detail::magic_vft::vtable_index<&ClientInstance::tick>());
 
 
 
@@ -68,8 +79,14 @@ void main_thread(HMODULE hModule) {
         if (lp != l) {
             lp = l;
             spdlog::info("localPlayer is now {:X}", reinterpret_cast<std::uintptr_t>(l));
+            if (l) {
+                auto* la = reinterpret_cast<Actor *>(l);
+                bool hasComponent = la->mContext.hasComponent<MoveInputComponent>();
+                auto mic = la->mContext.tryGetComponent<MoveInputComponent>();
+                spdlog::info("has MoveInputComponent: {:X}", hasComponent);
+            }
         }
-        // kinda stupid but whatever
+
         eventSys->dispatcher().post(mod_tick_event());
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }

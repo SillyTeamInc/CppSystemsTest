@@ -1,10 +1,12 @@
 //
 // Created by emi on 10/9/26.
 //
+#pragma once
 
-#ifndef CPPSYSTEMSTEST_PCH_HPP
-#define CPPSYSTEMSTEST_PCH_HPP
-
+#ifdef max // FUCK YOU
+#undef max
+#endif
+#include "entt/entt.hpp"
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks-inl.h>
@@ -13,5 +15,4 @@
 #include <type_traits>
 #include "libhat.hpp"
 #include "MinHook.h"
-
-#endif //CPPSYSTEMSTEST_PCH_HPP
+#include "util/types.hpp"

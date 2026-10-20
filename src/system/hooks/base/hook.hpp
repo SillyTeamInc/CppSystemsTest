@@ -23,25 +23,10 @@ public:
 
     void initialize() final {
         static_assert(std::is_same_v<decltype(&Derived::detour), R (Derived::*)(Args...)>,
-                      "Derived::detour must be a public non-static member taking exactly the hooked function's arguments");
+                      "Derived::detour must be a public non-static member taking exactly the hooked function's arguments")
+                ;
 
-        if (s_self.load() != nullptr) {
-            spdlog::error("Hook '{}' skipped, another instance of this hook is already installed!!!!", name());
-            return;
-        }
-
-        const std::uintptr_t target = resolve_target();
-        if (target == 0) {
-            spdlog::error("Hook '{}' skipped, its target address was not resolved", name());
-            return;
-        }
-
-        on_initialize();
-
-        s_self.store(static_cast<Derived*>(this));
-        if (!install(target, reinterpret_cast<void*>(&trampoline), reinterpret_cast<void**>(&s_original))) {
-            s_self.store(nullptr);
-        }
+        try_install();
     }
 
     void shutdown() final {
@@ -51,7 +36,21 @@ public:
     }
 
 protected:
-    explicit hook(std::string name) : hook_base(std::move(name)) {}
+    bool do_install(const std::uintptr_t target) final {
+        if (s_self.load() != nullptr) {
+            spdlog::error("Hook '{}' skipped, another instance of this hook is already installed!!!!", name());
+            return false;
+        }
+        s_self.store(static_cast<Derived*>(this));
+        if (!install(target, reinterpret_cast<void*>(&trampoline), reinterpret_cast<void**>(&s_original))) {
+            s_self.store(nullptr);
+            return false;
+        }
+        return true;
+    }
+
+    explicit hook(std::string name) : hook_base(std::move(name)) {
+    }
 
     R original(Args... args) const {
         return s_original(std::forward<Args>(args)...);
@@ -63,9 +62,11 @@ private:
     static inline signature* s_original = nullptr;
 
     static R trampoline(Args... args) {
-        if (auto* self = s_self.load(std::memory_order_acquire)) {
+        if (auto *self = s_self.load(std::memory_order_acquire)) {
             return self->detour(std::forward<Args>(args)...);
         }
         return s_original(std::forward<Args>(args)...);
     }
 };
+
+#define HOOK_STARTS_DISABLED bool start_enabled() const override { return false; }

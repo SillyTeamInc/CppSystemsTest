@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "events/mod_tick_event.hpp"
 #include "system/complex_system.hpp"
 #include "system/hooks/base/hook_base.hpp"
 
@@ -24,12 +25,18 @@ protected:
     void add_hook() {
         m_hooks.push_back(&add_subsystem<T>());
     }
-
 public:
     void initialize_subsystems() override;
     void initialize() override;
     void shutdown() override;
     void shutdown_subsystems() override;
+private:
+    bool m_listening = false;
+    std::size_t m_pending = 0;
+    void on_mod_tick(mod_tick_event &event);
+    void start_listening();
+    void stop_listening();
+
 };
 
 template<typename... Hooks>

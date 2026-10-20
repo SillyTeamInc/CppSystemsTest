@@ -7,6 +7,50 @@
 #include <MinHook.h>
 #include <spdlog/spdlog.h>
 
+namespace {
+    bool is_executable(const std::uintptr_t address) {
+        MEMORY_BASIC_INFORMATION mbi{};
+        if (VirtualQuery(reinterpret_cast<void*>(address), &mbi, sizeof(mbi)) == 0) return false;
+        if (mbi.State != MEM_COMMIT || (mbi.Protect & PAGE_GUARD)) return false;
+        constexpr DWORD executable = PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
+        return (mbi.Protect & executable) != 0;
+    }
+}
+
+bool hook_base::try_install() {
+    if (m_state == hook_state::installed) return true;
+    if (m_state == hook_state::failed) return false;
+
+    const std::uintptr_t target = resolve_target();
+    if (target == 0) {
+        if (retry_unresolved()) {
+            if (!m_logged_waiting) {
+                spdlog::info("Hook '{}' is waiting for target", m_name);
+                m_logged_waiting = true;
+            }
+            return false;
+        }
+        spdlog::error("Hook '{}' failed to resolve it's target", m_name);
+        m_state = hook_state::failed;
+        return false;
+    }
+
+    if (!is_executable(target)) {
+        spdlog::error("Hook '{}' skipped, 0x{:X} is not executable code", m_name, target);
+        m_state = hook_state::failed;
+        return false;
+    }
+
+    on_initialize();
+    if (!do_install(target)) {
+        m_state = hook_state::failed;
+        return false;
+    }
+
+    m_state = hook_state::installed;
+    return true;
+}
+
 bool hook_base::install(std::uintptr_t target, void* detour, void** original) {
     auto* address = reinterpret_cast<void*>(target);
     if (const auto status = MH_CreateHook(address, detour, original); status != MH_OK) {
@@ -49,4 +93,5 @@ void hook_base::shutdown() {
 
     m_target = nullptr;
     m_enabled = false;
+    m_state = hook_state::pending;
 }

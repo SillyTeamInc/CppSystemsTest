@@ -76,7 +76,25 @@ CPMAddPackage(
         OPTIONS "KIERO_INCLUDE_D3D11 ON" "KIERO_INCLUDE_D3D12 ON" "KIERO_BUILD_EXAMPLES OFF"
 )
 
-set_property(TARGET libhat kiero spdlog minhook PROPERTY UNITY_BUILD FALSE)
+CPMAddPackage(
+        NAME gsl
+        GITHUB_REPOSITORY microsoft/GSL
+        GIT_TAG v5.0.0
+)
+
+CPMAddPackage(
+        NAME EnTT
+        GITHUB_REPOSITORY skypjack/entt
+        GIT_TAG fe8d7d78c4823e8a66a050bf86f5c6318cf76ce7
+)
+
+CPMAddPackage(
+        NAME nlohmann_json
+        GITHUB_REPOSITORY nlohmann/json
+        VERSION 3.11.3
+)
+
+set_property(TARGET libhat kiero EnTT spdlog minhook PROPERTY UNITY_BUILD FALSE)
 
 if(MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -110,7 +128,35 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/system/features/modules/module_system.cpp
         src/system/features/modules/misc/test_module.cpp
         src/system/features/modules/misc/test_module.hpp
-        src/events/mod_tick_event.hpp)
+        src/events/mod_tick_event.hpp
+        src/util/types.hpp
+        src/sdk/mc/deps/ecs/EntityId.hpp
+        src/sdk/mc/deps/core/utility/optional_ref.hpp
+        src/sdk/mc/world/actor/Actor.cpp
+        src/sdk/mc/world/actor/Actor.hpp
+        src/sdk/mc/entity/components/MoveInputComponent.hpp
+        src/sdk/mc/platform/brstd/bitset.hpp
+        src/sdk/mc/platform/brstd/detail/bitset_base.hpp
+        src/sdk/mc/world/actor/ActorType.hpp
+        src/sdk/mc/input/NewInteractionModel.hpp
+        src/sdk/mc/server/commands/CommandPermissionLevel.hpp
+        src/system/features/modules/misc/sprint.cpp
+        src/system/features/modules/misc/sprint.hpp
+        src/system/hooks/mob_base_tick_hook.cpp
+        src/system/hooks/mob_base_tick_hook.hpp
+        src/events/base_tick_event.hpp
+        src/sdk/mc/world/actor/ActorUniqueID.hpp
+        src/sdk/mc/options/option_types/Option.hpp
+        src/sdk/mc/options/option_types/OptionType.hpp
+        src/sdk/mc/options/option_types/OptionOwnerType.hpp
+        src/sdk/mc/options/option_types/OptionID.hpp
+        src/sdk/mc/options/option_types/OptionResetFlags.hpp
+        src/sdk/mc/options/option_types/IntOption.hpp
+        src/sdk/mc/options/option_types/FloatOption.hpp
+        src/sdk/mc/options/IOptionsReader.hpp
+        src/util/option_dumper/option_dumper.cpp
+        src/util/option_dumper/option_dumper.hpp
+)
 
 target_sources(CppSystemsTest PRIVATE
         src/pch.hpp
@@ -132,8 +178,6 @@ target_sources(CppSystemsTest PRIVATE
         src/system/features/feature_system.hpp
         src/system/features/modules/module_system.hpp
 
-        src/system/hooks/base/detour.cpp
-        src/system/hooks/base/detour.hpp
         src/system/hooks/base/hook.hpp
         src/system/hooks/base/hook_system.cpp
         src/system/hooks/base/hook_system.hpp
@@ -158,7 +202,7 @@ set_target_properties(CppSystemsTest PROPERTIES CXX_STANDARD 26)
 
 target_include_directories(CppSystemsTest PRIVATE src)
 
-target_link_libraries(CppSystemsTest PRIVATE glm spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook runtimeobject.lib)
+target_link_libraries(CppSystemsTest PRIVATE glm Microsoft.GSL::GSL nlohmann_json EnTT::EnTT spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook runtimeobject.lib)
 
 set_property(TARGET CppSystemsTest spdlog magic_enum glm libhat minhook PROPERTY MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDLL>$<$<CONFIG:Release>:MultiThreaded>")
 
