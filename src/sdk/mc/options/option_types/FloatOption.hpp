@@ -7,11 +7,11 @@
 
 class FloatOption : public Option {
 public:
-    float const VALUE_MIN{};
-    float const VALUE_MAX{};
+    float /*const*/ VALUE_MIN{};
+    float /*const*/ VALUE_MAX{};
     float mValue{};
     float mDefaultValue{};
-    float const DELTA{};
+    float /*const*/ DELTA{};
 
     // NOLINTBEGIN
     virtual void save(::std::vector<::std::pair<::std::string, ::std::string> > &propertyVector) /*override*/;

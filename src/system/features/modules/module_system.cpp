@@ -8,6 +8,7 @@
 #include "system/systems_manager.hpp"
 #include "events/keyboard_event.hpp"
 #include "events/mod_tick_event.hpp"
+#include "misc/fullbright.hpp"
 #include "misc/sprint.hpp"
 
 hvs::event_dispatcher & module_system::dispatcher() const {
@@ -20,6 +21,8 @@ void module_system::initialize() {
     // modules
     add<test_module>();
     add<sprint>();
+    add<fullbright>();
+
 
     for (const auto& module : modules) {
         module->on_manager_init();

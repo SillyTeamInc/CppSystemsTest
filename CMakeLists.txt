@@ -156,6 +156,8 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/sdk/mc/options/IOptionsReader.hpp
         src/util/option_dumper/option_dumper.cpp
         src/util/option_dumper/option_dumper.hpp
+        src/system/features/modules/misc/fullbright.cpp
+        src/system/features/modules/misc/fullbright.hpp
 )
 
 target_sources(CppSystemsTest PRIVATE
