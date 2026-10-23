@@ -24,6 +24,7 @@ void fullbright::on_disable() {
     }
     this->gamma->mValue = this->m_prev_gamma;
     this->gamma->VALUE_MAX = 1.0f;
+
     dispatcher().deafen<base_tick_event, &fullbright::on_base_tick>(this);
 }
 

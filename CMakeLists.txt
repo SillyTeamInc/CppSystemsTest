@@ -158,6 +158,24 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/util/option_dumper/option_dumper.hpp
         src/system/features/modules/misc/fullbright.cpp
         src/system/features/modules/misc/fullbright.hpp
+        src/sdk/mc/options/option_types/BoolOption.hpp
+        src/sdk/mc/options/option_types/EnumOption.hpp
+        src/system/features/modules/misc/freelook.cpp
+        src/system/features/modules/misc/freelook.hpp
+        src/sdk/mc/entity/components/ActorHeadRotationComponent.hpp
+        src/sdk/mc/entity/components/CameraComponent.hpp
+        src/sdk/mc/deps/core/string/HashedString.hpp
+        src/sdk/mc/entity/components/CameraDirectLookComponent.hpp
+        src/sdk/mc/entity/components/CameraOrbitComponent.hpp
+        src/sdk/mc/deps/minecraft_camera/Spherical.hpp
+        src/sdk/mc/deps/minecraft_camera/CameraClientInstanceComponent.hpp
+        src/sdk/mc/deps/minecraft_camera/ICameraClientInstance.hpp
+        src/sdk/mc/deps/vanilla_camera/VanillaCameraApiComponent.hpp
+        src/sdk/mc/deps/vanilla_camera/IVanillaCameraAPI.hpp
+        src/sdk/mc/deps/minecraft_camera/CameraRegistry.hpp
+        src/sdk/mc/deps/game_refs/OwnerPtr.hpp
+        src/sdk/mc/deps/core/utility/NonOwnerPointer.hpp
+        src/sdk/mc/deps/core/utility/EnableNonOwnerReferences.hpp
 )
 
 target_sources(CppSystemsTest PRIVATE

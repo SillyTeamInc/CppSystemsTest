@@ -6,6 +6,8 @@
 #include <entt/entt.hpp>
 
 #include "sdk/mc/deps/core/utility/optional_ref.hpp"
+#include "sdk/mc/entity/components/CameraComponent.hpp"
+#include "sdk/mc/entity/components/CameraDirectLookComponent.hpp"
 #include "util/types.hpp"
 
 // see https://bedrock-native-modding.github.io/wiki/entities/entt.html
@@ -29,6 +31,26 @@ struct EntityIdTraits {
     static constexpr entity_type entity_mask = 0x3FFFF;
     static constexpr entity_type version_mask = 0x3FFF;
 };
+
+// why is this different..?
+template<>
+struct entt::component_traits<MinecraftCamera::CameraDirectLookComponent, EntityId> {
+    using element_type = MinecraftCamera::CameraDirectLookComponent;
+    using entity_type = EntityId;
+    static constexpr bool in_place_delete = true;
+    static constexpr std::size_t page_size = 128;
+};
+
+
+template<>
+struct entt::component_traits<MinecraftCamera::CameraComponent, EntityId> {
+    using element_type = MinecraftCamera::CameraComponent;
+    using entity_type = EntityId;
+    static constexpr bool in_place_delete = true;
+    static constexpr std::size_t page_size = 128;
+};
+
+
 
 template<>
 struct entt::entt_traits<EntityId> : entt::basic_entt_traits<EntityIdTraits> {

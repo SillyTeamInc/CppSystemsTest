@@ -5,6 +5,7 @@
 
 #include <utility>
 #include "magic_enum.hpp"
+#include "../../../../cmake-build-release/_deps/entt-src/src/entt/core/type_info.hpp"
 #include "util/hash.hpp"
 
 enum class category {
@@ -43,6 +44,8 @@ public:
         key_code = info.default_key_code;
     }
     int key_code = 0; // todo: getter for keycode string without horrible code
+
+    // todo: per-module spdlog logger
 
     // virtual functions
     virtual ~module() = default;
@@ -84,7 +87,7 @@ protected:
 public:
     // this is why constexpr is epic and useful
     static constexpr std::uint32_t type_id() {
-        return util::hash::fnv1a(typeid(T).name());
+        return util::hash::fnv1a(entt::internal::stripped_type_name<T>());
     }
     [[nodiscard]] std::uint32_t get_type_id() override {
         return type_id();

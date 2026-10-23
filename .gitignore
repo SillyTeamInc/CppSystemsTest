@@ -3,3 +3,4 @@ cmake-build-*/
 start_and_inject.bat
 .gdbserver/
 gen_option_ids.csx
+run_in_prefix.sh

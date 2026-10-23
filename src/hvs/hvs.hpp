@@ -23,11 +23,13 @@
 // but the repo is archived now :c
 namespace hvs {
     enum class priority : int {
-        lowest = -2,
+        lowest = -3,
+        lower = -2,
         low = -1,
         normal = 0,
         high = 1,
-        highest = 2
+        higher = 2,
+        highest = 3
     };
 
     enum class on_cancel {
@@ -174,6 +176,27 @@ namespace hvs {
             }
         }
 
+
+        /**
+         * @brief Registers a member function as an event listener for a specific event type
+         * @tparam E The event type
+         * @tparam Fn The member function pointer
+         * @tparam P The priority
+         * @tparam C The cancellation policy
+         * @tparam T The type of the instance
+         * @param instance The instance that owns the member function
+         * @return A listener_id that can be used to manage the listener
+         * @code
+         * struct receiver {
+         *     void handle(message&) {}
+         * };
+         * receiver value;
+         * event_dispatcher dispatcher;
+         * auto id = dispatcher.listen<message, &receiver::handle>(&value);
+         * // with priority and cancellation policy
+         * auto id2 = dispatcher.listen<message, &receiver::handle, hvs::priority::high, hvs::on_cancel::receive>(&value);
+         * @endcode
+         */
         template<typename E, auto Fn, priority P = priority::normal, on_cancel C = on_cancel::skip, typename T>
             requires std::is_member_function_pointer_v<decltype(Fn)>
         listener_id listen(T* instance) {
@@ -188,6 +211,21 @@ namespace hvs {
             });
         }
 
+        /**
+         * @brief Registers a free function as an event listener for a specific event type
+         * @tparam E The event type
+         * @tparam Fn The free function pointer
+         * @tparam P The priority
+         * @tparam C The cancellation policy
+         * @return A listener_id that can be used to manage the listener
+         * @code
+         * void handle(message&) {}
+         * event_dispatcher dispatcher;
+         * auto id = dispatcher.listen<message, &handle>();
+         * // with priority and cancellation policy
+         * auto id2 = dispatcher.listen<message, &handle, hvs::priority::high, hvs::on_cancel::receive>();
+         * @endcode
+         */
         template<typename E, auto Fn, priority P = priority::normal, on_cancel C = on_cancel::skip>
             requires std::is_function_v<std::remove_pointer_t<decltype(Fn)>>
         listener_id listen() {
@@ -202,6 +240,20 @@ namespace hvs {
             });
         }
 
+        /**
+         * @brief Registers a callable object as an event listener for a specific event type
+         * @tparam E The event type
+         * @tparam F The callable type
+         * @param fn The callable object to invoke
+         * @param options The listener priority, cancellation policy, and owner
+         * @return A listener_id that can be used to manage the listener
+         * @code
+         * event_dispatcher dispatcher;
+         * auto id = dispatcher.listen<message>(
+         *     [](message&) {},
+         *     {.prio = priority::high});
+         * @endcode
+         */
         template<typename E, typename F>
         listener_id listen(F&& fn, listen_options options = {}) {
             static_assert(std::is_invocable_v<std::decay_t<F>&, E&>, "handler must be callable with the event type");
@@ -215,6 +267,15 @@ namespace hvs {
             });
         }
 
+        /**
+         * @brief Removes all registrations of a free function for a specific event type
+         * @tparam E The event type
+         * @tparam Fn The free function pointer
+         * @return The number of listeners removed
+         * @code
+         * dispatcher.deafen<message, &handle>();
+         * @endcode
+         */
         template<typename E, auto Fn>
         std::size_t deafen() {
             if (auto* ch = find(detail::event_type_id<E>())) {
@@ -223,6 +284,17 @@ namespace hvs {
             return 0;
         }
 
+        /**
+         * @brief Removes all registrations of a member function for an instance
+         * @tparam E The event type
+         * @tparam Fn The member function pointer
+         * @tparam T The type of the instance
+         * @param instance The instance whose registration should be removed
+         * @return The number of listeners removed
+         * @code
+         * dispatcher.deafen<message, &receiver::handle>(&value);
+         * @endcode
+         */
         template<typename E, auto Fn, typename T>
         std::size_t deafen(const T* instance) {
             if (auto* ch = find(detail::event_type_id<E>())) {
@@ -233,6 +305,14 @@ namespace hvs {
             return 0;
         }
 
+        /**
+         * @brief Removes a listener by its identifier
+         * @param id The identifier of the listener to remove
+         * @return 1 if a listener was removed, otherwise 0
+         * @code
+         * dispatcher.deafen(id);
+         * @endcode
+         */
         std::size_t deafen(const listener_id& id) {
             if (!id || id.type >= detail::max_event_types) {
                 return 0;
@@ -243,6 +323,14 @@ namespace hvs {
             return 0;
         }
 
+        /**
+         * @brief Removes all listeners owned by an instance
+         * @param owner The owner associated with the listeners
+         * @return The number of listeners removed
+         * @code
+         * dispatcher.deafen_all(&value);
+         * @endcode
+         */
         std::size_t deafen_all(const void* owner) {
             std::size_t removed = 0;
             for (std::size_t type = 0; type < detail::max_event_types; ++type) {
@@ -253,19 +341,55 @@ namespace hvs {
             return removed;
         }
 
+        /**
+         * @brief Creates an RAII handle for a registered listener
+         * @param id The identifier of the listener to manage
+         * @return A scoped listener that removes the listener when destroyed
+         * @code
+         * auto listener = dispatcher.scope(id);
+         * @endcode
+         */
         [[nodiscard]] scoped_listener scope(listener_id id);
 
+        /**
+         * @brief Returns the number of listeners registered for an event type
+         * @tparam E The event type
+         * @return The number of listeners registered for the event type
+         * @code
+         * const auto count = dispatcher.listener_count<message>();
+         * @endcode
+         */
         template<typename E>
         [[nodiscard]] std::size_t listener_count() const {
             const auto* ch = find(detail::event_type_id<E>());
             return ch ? ch->count.load(std::memory_order_relaxed) : 0;
         }
 
+        /**
+         * @brief Checks whether an event type has any registered listeners
+         * @tparam E The event type
+         * @return true if at least one listener is registered, otherwise false
+         * @code
+         * if (dispatcher.has_listeners<message>()) {
+         *     dispatcher.post(message{});
+         * }
+         * @endcode
+         */
         template<typename E>
         [[nodiscard]] bool has_listeners() const {
             return listener_count<E>() != 0;
         }
 
+        /**
+         * @brief Dispatches an event to its registered listeners
+         * @tparam E The event type
+         * @param event The event to dispatch
+         * @return false if a cancelable event was canceled, otherwise true
+         * @code
+         * message value;
+         * const bool delivered = dispatcher.post(value);
+         * @endcode
+         */
         template<typename E>
         bool post(E&& event) {
             using event_t = std::remove_cvref_t<E>;
@@ -292,6 +416,14 @@ namespace hvs {
             }
         }
 
+        /**
+         * @brief Adds a copyable event to the dispatch queue
+         * @tparam E The event type
+         * @param event The event to queue
+         * @code
+         * dispatcher.queue(message{});
+         * @endcode
+         */
         template<typename E>
         void queue(E event) {
             static_assert(std::is_copy_constructible_v<E>, "queued events must be copyable");
@@ -299,6 +431,13 @@ namespace hvs {
             m_queue.push_back([this, event = std::move(event)]() mutable { post(event); });
         }
 
+        /**
+         * @brief Dispatches all events currently in the queue
+         * @return The number of queued events that were dispatched
+         * @code
+         * const auto processed = dispatcher.process_queue();
+         * @endcode
+         */
         std::size_t process_queue() {
             std::vector<std::function<void()>> pending;
             {

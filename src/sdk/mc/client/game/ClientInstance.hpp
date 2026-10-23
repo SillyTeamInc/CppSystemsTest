@@ -6,6 +6,7 @@
 
 #include "core/sdk_base.hpp"
 #include "glm/vec2.hpp"
+#include "sdk/mc/deps/core/utility/EnableNonOwnerReferences.hpp"
 #include "util/memory.hpp"
 #include "util/types.hpp"
 
@@ -187,14 +188,6 @@ namespace ui { class ScreenTechStackSelector; }
 namespace ui { enum class SceneType; }
 enum class ClientPlayMode {};
 namespace Core { class LevelStorageState; };
-
-namespace Bedrock {
-    class EnableNonOwnerReferences {
-    public:
-        virtual ~EnableNonOwnerReferences();
-    };
-};
-
 
 class IClientInstance : public ::Bedrock::EnableNonOwnerReferences {
 public:

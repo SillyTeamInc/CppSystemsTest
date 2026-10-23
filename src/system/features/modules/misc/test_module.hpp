@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../module.hpp"
+#include "events/base_tick_event.hpp"
 
 class test_module : public module_base<test_module> {
 public:
@@ -13,6 +14,9 @@ public:
 
     void on_enable() override;
     void on_disable() override;
+
+    void on_base_tick(base_tick_event &event);
+
     void on_manager_init() override;
     void on_manager_exit() override;
 };
