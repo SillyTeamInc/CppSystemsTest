@@ -35,6 +35,7 @@
 #include "sdk/mc/options/IOptionsReader.hpp"
 #include "sdk/mc/world/actor/Actor.hpp"
 #include "system/render/render_system.hpp"
+#include <embedded/resources.hpp>
 
 class injected_notification {
     systems_manager* manager = nullptr;

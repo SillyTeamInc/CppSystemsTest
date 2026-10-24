@@ -191,6 +191,9 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/util/keyboard.cpp
         src/util/keyboard.hpp
 )
+# this is amazing compared to the embedding i made before lmao
+include(cmake/embed_resources.cmake)
+embed_resources(CppSystemsTest BACKEND ld)
 
 target_sources(CppSystemsTest PRIVATE
         src/pch.hpp
