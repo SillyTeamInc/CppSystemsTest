@@ -16,12 +16,14 @@
 #include <nlohmann/json.hpp>
 
 #include "events/base_tick_event.hpp"
+#include "events/render_event.hpp"
 #include "sdk/mc/entity/components/ActorHeadRotationComponent.hpp"
 #include "sdk/mc/entity/components/CameraComponent.hpp"
 #include "sdk/mc/entity/components/CameraDirectLookComponent.hpp"
 #include "sdk/mc/options/option_types/FloatOption.hpp"
 #include "util/option_dumper/option_dumper.hpp"
 
+#include <imgui.h>
 
 void test_module::on_enable() {
     spdlog::info("test module enabled");
@@ -34,16 +36,28 @@ void test_module::on_enable() {
     spdlog::info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN, fovSetting->VALUE_MAX, fovSetting->mValue, fovSetting->mDefaultValue, fovSetting->DELTA);*/
 
     dispatcher().listen<base_tick_event, &test_module::on_base_tick>(this);
+    dispatcher().listen<render_event, &test_module::on_render>(this);
 }
 
 void test_module::on_disable() {
     spdlog::info("test module disabled");
 
     dispatcher().deafen<base_tick_event, &test_module::on_base_tick>(this);
+    dispatcher().deafen<render_event, &test_module::on_render>(this);
+}
+
+void test_module::on_render(render_event &event) {
+
+    ImGui::Begin("test_module");
+    ImGui::Text("test_module");
+    ImGui::End();
+    static bool open = true;
+    ImGui::ShowDemoWindow(&open);
 }
 
 void test_module::on_base_tick(base_tick_event &event) {
-    auto lp = static_cast<LocalPlayer *>(event.actor);
+
+    /*auto lp = static_cast<LocalPlayer *>(event.actor);
     auto headRotComp = lp->mContext.tryGetComponent<ActorHeadRotationComponent>();
     if (!headRotComp.has_value()) {
         spdlog::warn("[test] ActorHeadRotationComponent not found..?");
@@ -72,7 +86,7 @@ void test_module::on_base_tick(base_tick_event &event) {
                      compPtr->mAspectRatio, compPtr->mFieldOfView, compPtr->mNearPlane, compPtr->mFarPlane);
     }
 
-    spdlog::info("[test] ok");
+    spdlog::info("[test] ok");*/
 }
 
 void test_module::on_manager_init() {

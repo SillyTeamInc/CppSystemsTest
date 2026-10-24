@@ -4,6 +4,9 @@
 
 #include "hook_base.hpp"
 
+#include <chrono>
+#include <thread>
+
 #include <MinHook.h>
 #include <spdlog/spdlog.h>
 
@@ -18,6 +21,12 @@ namespace {
 }
 
 bool hook_base::try_install() {
+    if (!applicable()) {
+        spdlog::info("Hook '{}' skipped, not applicable", m_name);
+        m_state = hook_state::skipped;
+        return false;
+    }
+
     if (m_state == hook_state::installed) return true;
     if (m_state == hook_state::failed) return false;
 
@@ -28,6 +37,7 @@ bool hook_base::try_install() {
                 spdlog::info("Hook '{}' is waiting for target", m_name);
                 m_logged_waiting = true;
             }
+            m_state = hook_state::pending;
             return false;
         }
         spdlog::error("Hook '{}' failed to resolve it's target", m_name);
@@ -94,4 +104,17 @@ void hook_base::shutdown() {
     m_target = nullptr;
     m_enabled = false;
     m_state = hook_state::pending;
+}
+
+void hook_base::wait_for_detours() {
+    using namespace std::chrono_literals;
+
+    const auto deadline = std::chrono::steady_clock::now() + 2s;
+    while (s_in_flight.load() != 0 && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(1ms);
+    }
+    if (const int left = s_in_flight.load(); left != 0) {
+        spdlog::warn("{} detours are still running, continuing anyway", left);
+    }
+
 }

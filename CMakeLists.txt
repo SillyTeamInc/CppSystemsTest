@@ -73,7 +73,7 @@ CPMAddPackage(
         NAME kiero
         GITHUB_REPOSITORY BasedInc/kiero
         GIT_TAG master
-        OPTIONS "KIERO_INCLUDE_D3D11 ON" "KIERO_INCLUDE_D3D12 ON" "KIERO_BUILD_EXAMPLES OFF"
+        OPTIONS "KIERO_BUILD_MINHOOK OFF" "KIERO_INCLUDE_D3D11 ON" "KIERO_INCLUDE_D3D12 ON" "KIERO_BUILD_EXAMPLES OFF"
 )
 
 CPMAddPackage(
@@ -94,7 +94,8 @@ CPMAddPackage(
         VERSION 3.11.3
 )
 
-set_property(TARGET libhat kiero EnTT spdlog minhook PROPERTY UNITY_BUILD FALSE)
+include(cmake/imgui.cmake)
+set_property(TARGET libhat imgui kiero EnTT spdlog minhook PROPERTY UNITY_BUILD FALSE)
 
 if(MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -105,6 +106,8 @@ if(MSVC)
         add_link_options(/LTCG)
     endif()
 endif()
+
+
 
 # am i stupid..?
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
@@ -176,6 +179,15 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/sdk/mc/deps/game_refs/OwnerPtr.hpp
         src/sdk/mc/deps/core/utility/NonOwnerPointer.hpp
         src/sdk/mc/deps/core/utility/EnableNonOwnerReferences.hpp
+        src/system/render/render_system.cpp
+        src/system/render/render_system.hpp
+        src/system/hooks/render_hooks/present_hook.cpp
+        src/system/hooks/render_hooks/present_hook.hpp
+        src/system/hooks/render_hooks/execute_command_lists_hook.cpp
+        src/system/hooks/render_hooks/execute_command_lists_hook.hpp
+        src/system/hooks/render_hooks/resize_buffers_hook.cpp
+        src/system/hooks/render_hooks/resize_buffers_hook.hpp
+        src/events/render_event.hpp
 )
 
 target_sources(CppSystemsTest PRIVATE
@@ -222,7 +234,7 @@ set_target_properties(CppSystemsTest PROPERTIES CXX_STANDARD 26)
 
 target_include_directories(CppSystemsTest PRIVATE src)
 
-target_link_libraries(CppSystemsTest PRIVATE glm Microsoft.GSL::GSL nlohmann_json EnTT::EnTT spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook runtimeobject.lib)
+target_link_libraries(CppSystemsTest PRIVATE imgui::imgui glm d3d12 dxgi d3dcompiler Microsoft.GSL::GSL nlohmann_json EnTT::EnTT spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook runtimeobject.lib)
 
 set_property(TARGET CppSystemsTest spdlog magic_enum glm libhat minhook PROPERTY MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDLL>$<$<CONFIG:Release>:MultiThreaded>")
 

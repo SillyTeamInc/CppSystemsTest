@@ -5,6 +5,7 @@
 
 #include "../module.hpp"
 #include "events/base_tick_event.hpp"
+#include "events/render_event.hpp"
 
 class test_module : public module_base<test_module> {
 public:
@@ -14,6 +15,7 @@ public:
 
     void on_enable() override;
     void on_disable() override;
+    void on_render(render_event &event);
 
     void on_base_tick(base_tick_event &event);
 

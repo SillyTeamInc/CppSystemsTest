@@ -62,6 +62,7 @@ private:
     static inline signature* s_original = nullptr;
 
     static R trampoline(Args... args) {
+        hook_base::detour_guard guard;
         if (auto *self = s_self.load(std::memory_order_acquire)) {
             return self->detour(std::forward<Args>(args)...);
         }

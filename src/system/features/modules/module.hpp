@@ -5,7 +5,6 @@
 
 #include <utility>
 #include "magic_enum.hpp"
-#include "../../../../cmake-build-release/_deps/entt-src/src/entt/core/type_info.hpp"
 #include "util/hash.hpp"
 
 enum class category {

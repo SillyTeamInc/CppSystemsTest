@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <functional>
 
 class systems_manager;
 

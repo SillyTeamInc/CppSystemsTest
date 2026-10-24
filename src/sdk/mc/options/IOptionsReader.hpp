@@ -10,6 +10,7 @@
 #include <gsl/gsl>
 
 #include "option_types/OptionResetFlags.hpp"
+#include "sdk/mc/input/NewInteractionModel.hpp"
 
 class Option;
 

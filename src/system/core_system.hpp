@@ -3,22 +3,21 @@
 //
 #pragma once
 
-#include "generic_system.hpp"
-#include <windows.h>
 #include <kiero.hpp>
+#include <windows.h>
 #include <winrt/base.h>
+#include "generic_system.hpp"
 
 #include "event_system.hpp"
+#include "events/char_event.hpp"
 #include "events/keyboard_event.hpp"
+#include "spdlog/spdlog.h"
 
 class core_system : public generic_system {
     std::string m_old_window_title{};
 
 public:
-
-    core_system(HMODULE hModule) : m_dll_module(hModule) {
-
-    }
+    core_system(HMODULE hModule) : m_dll_module(hModule) {}
     HMODULE m_dll_module{};
     bool m_eject_requested = false;
     HWND m_window_handle = nullptr;
@@ -37,13 +36,9 @@ public:
             }
 
             hvs::event_dispatcher& dispatcher = coreSys->manager->get<event_system>()->dispatcher();
-            keyboard_event event{
-                hWnd,
-                static_cast<uint32_t>(wParam),
-                lParam,
-                uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN,
-                uMsg == WM_SYSKEYDOWN || uMsg == WM_SYSKEYUP
-            };
+            keyboard_event event{hWnd, static_cast<uint32_t>(wParam), lParam,
+                                 uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN,
+                                 uMsg == WM_SYSKEYDOWN || uMsg == WM_SYSKEYUP};
 
             dispatcher.post(event);
 
@@ -52,6 +47,15 @@ public:
             }
         }
 
+
+        if (uMsg == WM_CHAR) {
+            char_event event{static_cast<wchar_t>(wParam)};
+            system_of_a_down->get<event_system>()->dispatcher().post(event);
+
+            if (event.is_canceled()) {
+                return 0;
+            }
+        }
 
         return CallWindowProc(reinterpret_cast<WNDPROC>(wndProcOld), hWnd, uMsg, wParam, lParam);
     };

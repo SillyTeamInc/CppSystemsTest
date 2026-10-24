@@ -9,7 +9,7 @@ class generic_system;
 class systems_manager {
     // messy shit
     // this also requires rtti
-    std::vector<std::unique_ptr<generic_system> > m_owned;
+    std::vector<std::unique_ptr<generic_system>> m_owned;
     std::vector<generic_system*> m_all;
     std::unordered_map<std::type_index, generic_system*> m_by_type;
 
