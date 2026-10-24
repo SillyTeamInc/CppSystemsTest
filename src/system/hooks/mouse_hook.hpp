@@ -13,7 +13,7 @@ class mouse_hook : public hook<mouse_hook, void(void*, std::uint8_t, int, short,
     event_system* m_events = nullptr;
 
 public:
-    mouse_hook() : hook("Mouse::feed") {}
+    mouse_hook() : hook("MouseDevice::feed") {}
 
     void detour(void* self, std::uint8_t actionButtonId, int buttonData, short x, short y, short dx, short dy,
                 std::uint8_t forceMotionlessPointer);

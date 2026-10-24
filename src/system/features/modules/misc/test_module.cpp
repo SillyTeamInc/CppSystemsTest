@@ -25,6 +25,8 @@
 
 #include <imgui.h>
 
+#include "util/keyboard.hpp"
+
 void test_module::on_enable() {
     spdlog::info("test module enabled");
     auto ci = core::get_client_instance();
@@ -50,6 +52,11 @@ void test_module::on_render(render_event &event) {
 
     ImGui::Begin("test_module");
     ImGui::Text("test_module");
+    std::string_view escape_key_text = keyboard::key_to_string(keyboard::key::escape);
+    std::string_view capslock = keyboard::key_to_string(keyboard::key::caps_lock);
+    ImGui::Text("Escape: %s", escape_key_text.data());
+    ImGui::Text("Caps Lock: %s", capslock.data());
+
     ImGui::End();
     static bool open = true;
     ImGui::ShowDemoWindow(&open);

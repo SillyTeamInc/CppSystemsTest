@@ -9,7 +9,7 @@
 
 class freelook : public module_base<freelook> {
 public:
-    static constexpr module_info info {"Freelook", "Yeah", category::misc, 0x46, false, false};
+    static constexpr module_info info {"Freelook", "Yeah", category::misc, static_cast<int>(keyboard::key::f6), false, false};
 
     explicit freelook() : module_base(info) {}
 

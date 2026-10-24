@@ -6,10 +6,11 @@
 #include "../module.hpp"
 #include "events/base_tick_event.hpp"
 #include "events/render_event.hpp"
+#include "util/keyboard.hpp"
 
 class test_module : public module_base<test_module> {
 public:
-    static constexpr module_info info {"Test", "Example module", category::misc, VK_F3};
+    static constexpr module_info info {"Test", "Example module", category::misc, static_cast<int>(keyboard::key::f3)};
 
     explicit test_module() : module_base(info) {}
 

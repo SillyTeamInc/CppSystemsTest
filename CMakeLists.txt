@@ -188,6 +188,8 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/system/hooks/render_hooks/resize_buffers_hook.cpp
         src/system/hooks/render_hooks/resize_buffers_hook.hpp
         src/events/render_event.hpp
+        src/util/keyboard.cpp
+        src/util/keyboard.hpp
 )
 
 target_sources(CppSystemsTest PRIVATE
