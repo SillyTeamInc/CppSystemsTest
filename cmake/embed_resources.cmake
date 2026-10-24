@@ -259,5 +259,173 @@ const blob* find(std::string_view path) noexcept {
     target_sources(${target} PRIVATE ${sources} ${objects} "${index_path}")
     target_include_directories(${target} PRIVATE "${include_dir}")
 
+    set_target_properties(${target} PROPERTIES
+            EMBED_RESOURCES_DIRECTORY "${ARG_DIRECTORY}"
+            EMBED_RESOURCES_NAMESPACE "${ARG_NAMESPACE}"
+            EMBED_RESOURCES_HEADER "${ARG_HEADER}"
+            EMBED_RESOURCES_HEADER_DIR "${header_dir}"
+            EMBED_RESOURCES_BLOB_HEADER "${blob_header}"
+            EMBED_RESOURCES_INCLUDE_DIR "${include_dir}"
+            EMBED_RESOURCES_SOURCE_DIR "${source_dir}"
+            EMBED_RESOURCES_EXCLUDE "${ARG_EXCLUDE}")
+
     message(STATUS "[embed_resources(${target})] embedded ${count} resource(s) from ${ARG_DIRECTORY} using the ${backend} backend")
+endfunction()
+
+function(embed_resources_enum target enum_name subdir)
+    cmake_parse_arguments(PARSE_ARGV 3 ARG "" "REGEX" "")
+
+    if (NOT TARGET ${target})
+        message(FATAL_ERROR "[embed_resources_enum] ${target} is not a known cmake target")
+    endif ()
+
+    get_target_property(directory ${target} EMBED_RESOURCES_DIRECTORY)
+    if (NOT directory)
+        message(FATAL_ERROR "[embed_resources_enum] call embed_resources(${target}) first")
+    endif ()
+    get_target_property(namespace ${target} EMBED_RESOURCES_NAMESPACE)
+    get_target_property(header ${target} EMBED_RESOURCES_HEADER)
+    get_target_property(header_dir ${target} EMBED_RESOURCES_HEADER_DIR)
+    get_target_property(blob_header ${target} EMBED_RESOURCES_BLOB_HEADER)
+    get_target_property(include_dir ${target} EMBED_RESOURCES_INCLUDE_DIR)
+    get_target_property(source_dir ${target} EMBED_RESOURCES_SOURCE_DIR)
+    get_target_property(exclude ${target} EMBED_RESOURCES_EXCLUDE)
+    if (exclude MATCHES "NOTFOUND$")
+        set(exclude)
+    endif ()
+    if (header_dir MATCHES "NOTFOUND$")
+        set(header_dir)
+    endif ()
+
+    string(REGEX REPLACE "/+$" "" subdir "${subdir}")
+    if (NOT IS_DIRECTORY "${directory}/${subdir}")
+        message(FATAL_ERROR "[embed_resources_enum] ${directory}/${subdir} doesnt exist")
+    endif ()
+
+    file(GLOB_RECURSE files CONFIGURE_DEPENDS LIST_DIRECTORIES false
+            RELATIVE "${directory}" "${directory}/${subdir}/*")
+    list(FILTER files EXCLUDE REGEX "(^|/)\\.")
+    foreach (pattern IN LISTS exclude)
+        list(FILTER files EXCLUDE REGEX "${pattern}")
+    endforeach ()
+    if (ARG_REGEX)
+        list(FILTER files INCLUDE REGEX "${ARG_REGEX}")
+    endif ()
+    list(SORT files)
+
+    # lol
+    set(keywords
+            alignas alignof and and_eq asm auto bitand bitor bool break case catch char char8_t char16_t char32_t
+            class compl concept const consteval constexpr constinit const_cast continue co_await co_return co_yield
+            decltype default delete do double dynamic_cast else enum explicit export extern false float for friend
+            goto if inline int long mutable namespace new noexcept not not_eq nullptr operator or or_eq private
+            protected public register reinterpret_cast requires return short signed sizeof static static_assert
+            static_cast struct switch template this thread_local throw true try typedef typeid typename union
+            unsigned using virtual void volatile wchar_t while xor xor_eq)
+
+    string(LENGTH "${subdir}/" prefix_length)
+    set(names)
+    set(enumerators)
+    set(table)
+    set(name_table)
+
+    foreach (rel IN LISTS files)
+        string(SUBSTRING "${rel}" ${prefix_length} -1 local)
+        string(REGEX REPLACE "\\.[^./]*$" "" local "${local}")
+        string(TOLOWER "${local}" name)
+        string(REGEX REPLACE "[^a-z0-9]+" "_" name "${name}")
+        string(REGEX REPLACE "^_+|_+$" "" name "${name}")
+
+        if (name STREQUAL "")
+            message(FATAL_ERROR "[embed_resources_enum] ${rel} has no letters or digits to build a name from")
+        endif ()
+        if (name MATCHES "^[0-9]")
+            set(name "_${name}")
+        endif ()
+        if (name STREQUAL "count")
+            message(FATAL_ERROR "[embed_resources_enum] ${rel} would be named 'count', which is reserved for the number of values")
+        endif ()
+        if (name IN_LIST keywords)
+            set(name "${name}_")
+        endif ()
+        if (name IN_LIST names)
+            message(FATAL_ERROR "[embed_resources_enum] ${rel} and ${owner_${name}} are both named '${name}'")
+        endif ()
+        list(APPEND names "${name}")
+        set(owner_${name} "${rel}")
+
+        string(MAKE_C_IDENTIFIER "${rel}" blob_ident)
+        string(APPEND enumerators "    ${name},\n")
+        string(APPEND table "    &${blob_ident},\n")
+        string(APPEND name_table "    \"${name}\",\n")
+    endforeach ()
+
+    list(LENGTH files count)
+    if (count EQUAL 0)
+        set(table "    nullptr,\n")
+        set(name_table "    \"\",\n")
+    endif ()
+
+    if (header_dir)
+        set(enum_header "${header_dir}/${enum_name}.hpp")
+    else ()
+        set(enum_header "${enum_name}.hpp")
+    endif ()
+
+    set(enum_header_text "// This file was generated by CMake. Do not edit it manually.
+#pragma once
+
+#include <cstdint>
+#include <string_view>
+
+#include <${blob_header}>
+
+namespace ${namespace} {
+
+enum class ${enum_name} : std::uint16_t {
+${enumerators}    count
+};
+
+[[nodiscard]] const blob& get(${enum_name} id) noexcept;
+[[nodiscard]] std::string_view name(${enum_name} id) noexcept;
+
+}
+")
+
+    set(enum_source_text "// This file was generated by CMake. Do not edit it manually.
+#include <${enum_header}>
+#include <${header}>
+
+namespace ${namespace} {
+namespace {
+
+const blob* const blobs[] = {
+${table}};
+
+const std::string_view names[] = {
+${name_table}};
+
+}
+
+const blob& get(${enum_name} id) noexcept {
+    return *blobs[static_cast<std::size_t>(id)];
+}
+
+std::string_view name(${enum_name} id) noexcept {
+    return names[static_cast<std::size_t>(id)];
+}
+
+}
+")
+
+    set(enum_source "${source_dir}/${enum_name}_enum.cpp")
+    _embed_resources_write("${include_dir}/${enum_header}" "${enum_header_text}")
+    _embed_resources_write("${enum_source}" "${enum_source_text}")
+
+    set_source_files_properties("${enum_source}" PROPERTIES
+            SKIP_UNITY_BUILD_INCLUSION ON
+            SKIP_PRECOMPILE_HEADERS ON)
+    target_sources(${target} PRIVATE "${enum_source}")
+
+    message(STATUS "[embed_resources_enum(${target})] ${enum_name} has ${count} values from ${subdir}")
 endfunction()

@@ -6,6 +6,7 @@
 #include <cctype>
 #include <cstdint>
 #include <imgui.h>
+#include <map>
 #include <string_view>
 
 #include "magic_enum.hpp"
@@ -59,7 +60,7 @@ namespace keyboard {
         backspace = 0x08,
         space = 0x20,
         enter = 0x0D,
-        //capital = 0x14,
+        // capital = 0x14,
         escape = 0x1B,
         caps_lock = 0x14,
         left_shift = 0xA0,
@@ -223,16 +224,14 @@ namespace keyboard {
         std::array<char, 64> characters{};
         std::uint8_t size{};
 
-        constexpr operator std::string_view() const {
-            return {characters.data(), size};
-        }
+        constexpr operator std::string_view() const { return {characters.data(), size}; }
     };
 
     constexpr key_name format_key_name(std::string_view name) {
         key_name result;
         bool word_start = true;
 
-        for (const char c : name) {
+        for (const char c: name) {
             if (c == '_') {
                 result.characters[result.size++] = ' ';
                 word_start = true;
@@ -262,4 +261,6 @@ namespace keyboard {
      * @return A string_view representing the key name
      */
     std::string_view key_to_string(key k);
-};
+
+    std::map<key, std::string_view> get_all_keys();
+} // namespace keyboard

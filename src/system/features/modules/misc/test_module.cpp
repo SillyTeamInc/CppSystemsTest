@@ -25,6 +25,7 @@
 
 #include <imgui.h>
 
+#include "util/fonts.hpp"
 #include "util/keyboard.hpp"
 
 void test_module::on_enable() {
@@ -56,6 +57,41 @@ void test_module::on_render(render_event &event) {
     std::string_view capslock = keyboard::key_to_string(keyboard::key::caps_lock);
     ImGui::Text("Escape: %s", escape_key_text.data());
     ImGui::Text("Caps Lock: %s", capslock.data());
+
+    {
+        fonts::scope font(font::comfortaa, 24);
+        ImGui::Text("this is comfortaa, hello world");
+    }
+
+    {
+        fonts::scope font(font::open_sans, 24);
+        ImGui::Text("this is open sans, hello world");
+    }
+
+    auto codes = keyboard::get_all_keys();
+    if (ImGui::CollapsingHeader("Keys")) {
+        ImGui::Spacing();
+        if (ImGui::BeginTable("##keys", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                                           ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchProp)) {
+            ImGui::TableSetupColumn("Enum");
+            ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("Code", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+            ImGui::TableHeadersRow();
+
+            for (const auto& [key, name] : codes) {
+                std::string_view keyingIt = magic_enum::enum_name(key);
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted(keyingIt.data(), keyingIt.data() + keyingIt.size());
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextUnformatted(name.data(), name.data() + name.size());
+                ImGui::TableSetColumnIndex(2);
+                ImGui::Text("%d", static_cast<int>(key));
+            }
+
+            ImGui::EndTable();
+        }
+    }
 
     ImGui::End();
     static bool open = true;

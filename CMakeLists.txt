@@ -190,10 +190,13 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/events/render_event.hpp
         src/util/keyboard.cpp
         src/util/keyboard.hpp
+        src/util/fonts.cpp
+        src/util/fonts.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)
 embed_resources(CppSystemsTest BACKEND ld)
+embed_resources_enum(CppSystemsTest font fonts REGEX "\\.(ttf|otf|ttc)$")
 
 target_sources(CppSystemsTest PRIVATE
         src/pch.hpp

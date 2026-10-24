@@ -4,15 +4,16 @@
 
 #pragma once
 
-#include "../module.hpp"
 #include <util/keyboard.hpp>
+#include "../module.hpp"
 
 class FloatOption;
 class base_tick_event;
 
 class fullbright : public module_base<fullbright> {
 public:
-    static constexpr module_info info {"Fullbright", "Destroy darkness", category::misc, static_cast<int>(keyboard::key::numpad_0), true};
+    static constexpr module_info info{"Fullbright", "Destroy darkness", category::misc,
+                                      static_cast<int>(keyboard::key::numpad_0), true};
 
     explicit fullbright() : module_base(info) {}
 

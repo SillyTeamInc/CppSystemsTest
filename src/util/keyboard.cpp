@@ -4,7 +4,10 @@
 
 #include "keyboard.hpp"
 #include <imgui.h>
+#include <map>
 #include <windows.h>
+
+#include "spdlog/spdlog.h"
 
 ImGuiKey keyboard::vk_to_imgui_key(std::uint32_t vk, std::uint8_t scan_code, bool extended) {
     if (vk >= 'A' && vk <= 'Z')
@@ -98,5 +101,13 @@ std::string_view keyboard::key_to_string(key k) {
 
     return cached_names[static_cast<std::uint32_t>(k)];
 }
+std::map<keyboard::key, std::string_view> keyboard::get_all_keys() {
+    std::map<key, std::string_view> result {};
+    for (const key k: magic_enum::enum_values<key>()) {
+        result[k] = key_to_string(k);
+    }
+    return result;
+}
+
 
 // this is fucking epic

@@ -23,6 +23,7 @@
 #include "system/core_system.hpp"
 #include "system/event_system.hpp"
 #include "system/systems_manager.hpp"
+#include "util/fonts.hpp"
 #include "util/keyboard.hpp"
 
 using namespace std::chrono_literals;
@@ -33,7 +34,7 @@ namespace {
     constexpr std::uint8_t mouse_right = 2;
     constexpr std::uint8_t mouse_middle = 3;
     constexpr std::uint8_t mouse_wheel = 4;
-}
+} // namespace
 
 bool render_system::ensure_kiero() {
     if (m_kiero_ready)
@@ -143,6 +144,8 @@ bool render_system::try_init(IDXGISwapChain* swap_chain) {
     ImGui::CreateContext();
     ImGui::GetIO().IniFilename = nullptr;
     m_imgui_ready = true;
+    fonts::load_embedded();
+    fonts::set_default(font::product_sans);
 
     if (!ImGui_ImplWin32_Init(m_hwnd))
         return fail("ImGui_ImplWin32_Init", E_FAIL);
@@ -316,6 +319,7 @@ void render_system::cleanup() {
         ImGui_ImplWin32_Shutdown();
     }
     if (m_imgui_ready) {
+        fonts::clear();
         ImGui::DestroyContext();
         m_imgui_ready = false;
     }

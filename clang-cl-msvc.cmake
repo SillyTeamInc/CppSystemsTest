@@ -8,8 +8,10 @@ set(CMAKE_AR llvm-lib)
 set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
 
 set(XWIN $ENV{HOME}/.xwin)
-set(CMAKE_C_FLAGS_INIT   "--target=x86_64-pc-windows-msvc -fuse-ld=lld")
-set(CMAKE_CXX_FLAGS_INIT "--target=x86_64-pc-windows-msvc -fuse-ld=lld")
+#[[set(CMAKE_C_FLAGS_INIT   "--target=x86_64-pc-windows-msvc -fuse-ld=lld")
+set(CMAKE_CXX_FLAGS_INIT "--target=x86_64-pc-windows-msvc -fuse-ld=lld")]]
+set(CMAKE_C_COMPILER_TARGET x86_64-pc-windows-msvc)
+set(CMAKE_CXX_COMPILER_TARGET x86_64-pc-windows-msvc)
 
 foreach(d crt/include sdk/include/ucrt sdk/include/um sdk/include/shared sdk/include/winrt sdk/include/cppwinrt)
     string(APPEND CMAKE_C_FLAGS_INIT   " /imsvc ${XWIN}/${d}")

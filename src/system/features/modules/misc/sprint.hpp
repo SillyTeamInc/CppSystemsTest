@@ -10,7 +10,7 @@ class base_tick_event;
 
 class sprint : public module_base<sprint> {
 public:
-    static constexpr module_info info {"Sprint", "Automatically sprints", category::misc, 0, true};
+    static constexpr module_info info{"Sprint", "Automatically sprints", category::misc, 0, true};
 
     explicit sprint() : module_base(info) {}
 
