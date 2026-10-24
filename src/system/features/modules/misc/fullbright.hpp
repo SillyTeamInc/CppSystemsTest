@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../module.hpp"
+#include <util/keyboard.hpp>
 
 class FloatOption;
 class base_tick_event;

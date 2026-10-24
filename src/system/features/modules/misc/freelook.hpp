@@ -6,6 +6,7 @@
 
 #include "../module.hpp"
 #include <windows.h>
+#include <util/keyboard.hpp>
 
 class freelook : public module_base<freelook> {
 public:
