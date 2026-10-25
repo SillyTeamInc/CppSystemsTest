@@ -37,6 +37,8 @@
 #include "system/render/render_system.hpp"
 #include <embedded/resources.hpp>
 
+#include "util/exceptions.hpp"
+
 class injected_notification {
     systems_manager* manager = nullptr;
 public:
@@ -89,6 +91,7 @@ public:
 void main_thread(HMODULE hModule) {
     core::logging::init(spdlog::level::trace);
     spdlog::info("hello world!!!");
+    util::exceptions::attach_handler();
 
     const auto manager = systems_manager::i();
     auto* coreSys = manager->add_system<core_system>(hModule);
@@ -147,6 +150,7 @@ void main_thread(HMODULE hModule) {
 
     manager->shutdown_systems();
 
+    util::exceptions::remove_handler();
     spdlog::info("All cleaned up, cya!");
     core::logging::shutdown();
     FreeLibraryAndExitThread(hModule, 0);

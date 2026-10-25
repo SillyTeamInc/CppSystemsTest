@@ -2,10 +2,14 @@
 // Created by emi on 10/12/2026.
 //
 #pragma once
+#include <exception>
+
+#include "spdlog/spdlog.h"
+
+
 
 namespace util::exceptions {
-    static void throw_error(const std::string& message) {
-        spdlog::error(message);
-        throw std::runtime_error(message);
-    }
-}
+    void attach_handler();
+    void remove_handler();
+    void throw_error(const std::string& message);
+} // namespace util::exceptions

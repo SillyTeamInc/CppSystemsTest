@@ -200,6 +200,7 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/system/hooks/local_player_turn_hook.cpp
         src/system/hooks/local_player_turn_hook.hpp
         src/events/local_player_turn_event.hpp
+        src/util/exceptions.cpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

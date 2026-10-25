@@ -72,6 +72,11 @@ void test_module::on_render(render_event &event) {
     ImGui::Text("Escape: %s", escape_key_text.data());
     ImGui::Text("Caps Lock: %s", capslock.data());
 
+    if (ImGui::Button("Don't click me")) {
+        int* ptr = nullptr;
+        *ptr = 0xB00B5; // haha funny
+    }
+
     {
         fonts::scope font(font::comfortaa, 24);
         ImGui::Text("this is comfortaa, hello world");
