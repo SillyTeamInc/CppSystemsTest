@@ -14,6 +14,10 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+if(MSVC)
+    add_compile_options(/EHsc)
+endif()
+
 
 set(CPM_DOWNLOAD_VERSION 0.40.2)
 set(CPM_DOWNLOAD_LOCATION "${CMAKE_BINARY_DIR}/cmake/CPM_${CPM_DOWNLOAD_VERSION}.cmake")
@@ -192,6 +196,10 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/util/keyboard.hpp
         src/util/fonts.cpp
         src/util/fonts.hpp
+        src/sdk/mc/entity/components/FlagComponent.hpp
+        src/system/hooks/local_player_turn_hook.cpp
+        src/system/hooks/local_player_turn_hook.hpp
+        src/events/local_player_turn_event.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

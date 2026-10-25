@@ -4,13 +4,15 @@
 #pragma once
 #include <bitset>
 
-#include "sdk/mc/deps/ecs/EntityId.hpp"
 #include "ActorType.hpp"
-#include "sdk/mc/input/NewInteractionModel.hpp"
-#include "sdk/mc/server/commands/CommandPermissionLevel.hpp"
 #include "ActorUniqueID.hpp"
 #include "glm/glm.hpp"
+#include "sdk/mc/deps/ecs/EntityId.hpp"
+#include "sdk/mc/input/NewInteractionModel.hpp"
+#include "sdk/mc/server/commands/CommandPermissionLevel.hpp"
 
+
+struct ActorHeadRotationComponent;
 enum class InputMode;
 class AABB;
 class ActionEvent;
@@ -703,4 +705,6 @@ public:
     void displayClientMessage(const std::string& msg) {
         displayClientMessage(msg, std::nullopt);
     }
+
+    ActorHeadRotationComponent* getActorHeadRotationComponent();
 };

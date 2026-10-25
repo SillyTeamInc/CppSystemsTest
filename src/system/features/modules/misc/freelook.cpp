@@ -10,36 +10,264 @@
 #include "sdk/mc/deps/minecraft_camera/CameraClientInstanceComponent.hpp"
 #include "sdk/mc/deps/minecraft_camera/CameraRegistry.hpp"
 #include "sdk/mc/deps/minecraft_camera/ICameraClientInstance.hpp"
+#include "sdk/mc/entity/components/ActorHeadRotationComponent.hpp"
+#include "sdk/mc/entity/components/FlagComponent.hpp"
+#include "sdk/mc/options/IOptionsReader.hpp"
 #include "sdk/mc/options/option_types/FloatOption.hpp"
 
+
 #include "sdk/mc/options/IOptionsReader.hpp"
+#include "sdk/mc/options/option_types/EnumOption.hpp"
+
+#include <spdlog/spdlog.h>
+
+#include "events/local_player_turn_event.hpp"
+#include "sdk/mc/entity/components/CameraOrbitComponent.hpp"
 
 void freelook::on_enable() {
-    dispatcher().listen<base_tick_event, &freelook::on_base_tick>(this);
-}
+    dispatcher().listen<local_player_turn_event, &freelook::on_lp_turn>(this);
 
-void freelook::on_disable() {
-    dispatcher().deafen<base_tick_event, &freelook::on_base_tick>(this);
-}
+    ClientInstance* ci = core::get_client_instance();
+    auto player = ci->getLocalPlayer();
+    if (!player) {
+        disable();
+        return;
+    }
 
-void freelook::on_base_tick(base_tick_event& event) {
-    // ICameraClientInstance
-    /*auto lp = static_cast<LocalPlayer*>(event.actor);
+    auto gock = player->getActorHeadRotationComponent();
+    mHeadYaw = {gock->mYHeadRot, gock->mYHeadRotO};
 
-    spdlog::info("LocalPlayer id:{:X}, mContext id:{:X}", reinterpret_cast<std::uintptr_t>(lp),
-    lp->mContext.mEntity.rawId);
+    std::size_t cameraCount = 0;
+    std::size_t removedUpdateComponents = 0;
+    for (auto&& [id, cameraComponent]: player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
+        ++cameraCount;
 
-    for (auto&&[i, component]: lp->mContext.mEnTTRegistry.view<CameraClientInstanceComponent>().each()) {
-        spdlog::info("CameraClientInstanceComponent id:{:X} CameraClientInstanceComponent:{:X}", i.rawId,
-    reinterpret_cast<std::uintptr_t>(&component));
+        auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
+        if (storage->contains(id)) {
+            mCameras[id] = storage->get(id).mUpdateMode;
+
+            storage->remove(id);
+            ++removedUpdateComponents;
+        }
+    }
+
+    for (auto&& [id, cameraComponent]:
+         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
+        mOriginalRotRads[id] = cameraComponent.mRotRads;
+    }
+
+    for (auto&& [id, cameraComponent]:
+         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
+        mOrbitRotsC[id] = cameraComponent.mCurrentSpherical;
+        mOrbitRotsI[id] = cameraComponent.mIdealSpherical;
     }
 
 
-    ClientInstance* ci = core::get_client_instance();
-
-    Bedrock::NonOwnerPointer<CameraRegistry> reg = ci->getCameraRegistry();
-    spdlog::info("c->mGameCamera id:{:X}", reg->mGameCamera->rawId);
-    for (OwnerPtr<EntityId> a: reg->mCameraEntities) {
-        spdlog::info("CameraEntity id:{:X}", a->rawId);
-    }*/
+    this->mThirdPerson = static_cast<EnumOption*>(
+            core::get_client_instance()->getOptions().getIfValid(OptionID::GameThirdperson).value());
+    mLastCameraState = mThirdPerson->mValue;
+    mThirdPerson->mValue = 1;
+    spdlog::info("[freelook] on_enable: saved camera state={}; complete", mLastCameraState);
 }
+
+void freelook::on_disable() {
+    dispatcher().deafen<local_player_turn_event, &freelook::on_lp_turn>(this);
+    auto player = core::get_client_instance()->getLocalPlayer();
+    if (!player) {
+        return;
+    }
+
+    std::size_t cameraCount = 0;
+    std::size_t restoredUpdateComponents = 0;
+    for (auto&& [id, cameraComponent]: player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
+        ++cameraCount;
+
+        auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
+        if (!storage->contains(id)) {
+            auto it = mCameras.find(id);
+            if (it == mCameras.end()) {
+                continue;
+            }
+
+            storage->emplace(id, VanillaCamera::UpdatePlayerFromCameraComponent(it->second));
+            ++restoredUpdateComponents;
+        }
+
+        ++restoredUpdateComponents;
+    }
+
+    for (auto&& [id, cameraComponent]:
+         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
+        if (!mOriginalRotRads.contains(id)) {
+            spdlog::warn("[freelook] on_disable: no original rotation found for camera id={}", id.rawId);
+            continue;
+        }
+
+        cameraComponent.mRotRads = mOriginalRotRads[id];
+    }
+
+    for (auto&& [id, cameraComponent]:
+         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
+        if (!mOrbitRotsC.contains(id) || !mOrbitRotsI.contains(id)) {
+            spdlog::warn("[freelook] on_disable: no original orbit rotation found for camera id={}", id.rawId);
+            continue;
+        }
+
+        cameraComponent.mCurrentSpherical = mOrbitRotsC[id];
+        cameraComponent.mIdealSpherical = mOrbitRotsI[id];
+    }
+
+    mThirdPerson->mValue = mLastCameraState;
+}
+
+void freelook::on_lp_turn(local_player_turn_event& event) {
+    glm::vec2 rot = glm::vec2(event.deltaRots->y, event.deltaRots->x);
+
+    const glm::vec2 deltaRads = glm::radians(rot);
+
+
+    for (auto&& [id, cameraComponent]:
+         event.player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
+        glm::vec2 newRot = glm::vec2(-deltaRads.x, deltaRads.y);
+        cameraComponent.mRotRads += newRot;
+    }
+
+    for (auto&& [id, cameraComponent]:
+         event.player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
+        cameraComponent.mCurrentSpherical.mAzimuth += deltaRads.x;
+        cameraComponent.mCurrentSpherical.mPolarAngle =
+                std::clamp(cameraComponent.mCurrentSpherical.mPolarAngle + deltaRads.y, 0.0f, glm::pi<float>());
+
+        cameraComponent.mIdealSpherical = cameraComponent.mCurrentSpherical;
+    }
+
+    event.cancel();
+}
+
+
+/*
+ *
+void Freelook::onEnable()
+{
+    auto player = ClientInstance::get()->getLocalPlayer();
+    if (!player)
+    {
+        setEnabled(false);
+        return;
+    }
+
+    gFeatureManager->mDispatcher->listen<BaseTickEvent, &Freelook::onBaseTickEvent>(this);
+    gFeatureManager->mDispatcher->listen<PacketOutEvent, &Freelook::onPacketOutEvent>(this);
+
+    auto gock = player->getActorHeadRotationComponent();
+    mHeadYaw = { gock->mHeadRot, gock->mOldHeadRot };
+
+    for (auto&& [id, cameraComponent] : player->mContext.mRegistry->view<CameraComponent>().each())
+    {
+        player->mContext.mRegistry->set_flag<CameraAlignWithTargetForwardComponent>(id, false);
+        auto storage = player->mContext.mRegistry->assure_t<UpdatePlayerFromCameraComponent>();
+        if (storage->contains(id))
+        {
+            mCameras[id] = storage->get(id).mUpdateMode;
+            storage->remove(id);
+        }
+
+        if (cameraComponent.getMode() == CameraMode::FirstPerson)
+        {
+            auto* gaming = player->mContext.mRegistry->try_get<CameraDirectLookComponent>(id);
+            if (gaming)
+            {
+                mOriginalRotRads[cameraComponent.getMode()] = gaming->mRotRads;
+            }
+        } else if (cameraComponent.getMode() == CameraMode::ThirdPerson || cameraComponent.getMode() ==
+CameraMode::ThirdPersonFront)
+        {
+            auto* gaming = player->mContext.mRegistry->try_get<CameraOrbitComponent>(id);
+            if (gaming)
+            {
+                mOriginalRotRads[cameraComponent.getMode()] = gaming->mRotRads;
+            }
+        }
+    }
+
+    mLastCameraState = ClientInstance::get()->getOptions()->mThirdPerson->value;
+    ClientInstance::get()->getOptions()->mThirdPerson->value = 1;
+}
+
+void Freelook::onDisable()
+{
+    auto player = ClientInstance::get()->getLocalPlayer();
+    if (!player)
+    {
+        return;
+    }
+
+    gFeatureManager->mDispatcher->deafen<BaseTickEvent, &Freelook::onBaseTickEvent>(this);
+    gFeatureManager->mDispatcher->deafen<PacketOutEvent, &Freelook::onPacketOutEvent>(this);
+
+    auto options = ClientInstance::get()->getOptions();
+    options->mThirdPerson->value = mLastCameraState;
+    mResetRot = true;
+}
+
+void Freelook::onBaseTickEvent(BaseTickEvent& event)
+{
+    auto player = ClientInstance::get()->getLocalPlayer();
+    if (!player)
+    {
+        setEnabled(false);
+        return;
+    }
+
+    auto gock = player->getActorHeadRotationComponent();
+    gock->mHeadRot = mHeadYaw.x;
+    gock->mOldHeadRot = mHeadYaw.y;
+}
+
+void Freelook::onPacketOutEvent(PacketOutEvent& event)
+{
+    if (event.mPacket->getId() == PacketID::PlayerAuthInput)
+    {
+        auto paip = event.getPacket<PlayerAuthInputPacket>();
+        paip->mYHeadRot = mHeadYaw.x;
+    } else if (event.mPacket->getId() == PacketID::MovePlayer)
+    {
+        auto mpp = event.getPacket<MovePlayerPacket>();
+        mpp->mYHeadRot = mHeadYaw.x;
+    }
+}
+
+void Freelook::onLookInputEvent(LookInputEvent& event)
+{
+    if (!mResetRot) return;
+
+    auto player = ClientInstance::get()->getLocalPlayer();
+    for (auto&& [id, cameraComponent] : player->mContext.mRegistry->view<CameraComponent>().each())
+    {
+        player->mContext.mRegistry->set_flag<CameraAlignWithTargetForwardComponent>(id, true);
+        auto storage = player->mContext.mRegistry->assure_t<UpdatePlayerFromCameraComponent>();
+        if (!storage->contains(id))
+        {
+            storage->emplace(id, UpdatePlayerFromCameraComponent(mCameras[id]));
+        }
+
+        if (cameraComponent.getMode() == CameraMode::FirstPerson)
+        {
+            auto* gaming = player->mContext.mRegistry->try_get<CameraDirectLookComponent>(id);
+            if (gaming)
+            {
+                gaming->mRotRads = mOriginalRotRads[cameraComponent.getMode()];
+            }
+        } else if (cameraComponent.getMode() == CameraMode::ThirdPerson || cameraComponent.getMode() ==
+CameraMode::ThirdPersonFront)
+        {
+            auto* gaming = player->mContext.mRegistry->try_get<CameraOrbitComponent>(id);
+            if (gaming)
+            {
+                gaming->mRotRads = mOriginalRotRads[cameraComponent.getMode()];
+            }
+        }
+    }
+
+    mResetRot = false;
+}*/

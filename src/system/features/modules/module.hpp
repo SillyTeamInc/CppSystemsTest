@@ -4,12 +4,11 @@
 #pragma once
 
 #include <utility>
+#include "core/logging.hpp"
 #include "magic_enum.hpp"
 #include "util/hash.hpp"
 
-enum class category {
-    misc
-};
+enum class category { misc };
 class module_system;
 
 struct module_info {
@@ -31,6 +30,7 @@ protected:
 
     module_info m_info;
 
+
     // dont manually set this or you'll fuck things up lol
     bool m_enabled = false;
     bool m_wanted_state = false;
@@ -39,12 +39,10 @@ protected:
     bool lock_state(bool locked);
 
 public:
-    explicit module(const module_info& info) : m_info(info) {
-        key_code = info.default_key_code;
-    }
-    int key_code = 0; // todo: getter for keycode string without horrible code
+    explicit module(const module_info& info) : m_info(info) { key_code = info.default_key_code; }
 
-    // todo: per-module spdlog logger
+    int key_code = 0;
+
 
     // virtual functions
     virtual ~module() = default;
@@ -55,7 +53,7 @@ public:
     // this should not be overridden by modules
     virtual std::uint32_t get_type_id() = 0;
 
-    //getters
+    // getters
     [[nodiscard]] int get_default_key_code() const;
     [[nodiscard]] std::string_view get_category_name() const;
     [[nodiscard]] const std::string_view& get_name() const;
@@ -66,7 +64,7 @@ public:
     [[nodiscard]] bool is_state_locked() const;
     [[nodiscard]] bool is_toggle() const;
 
-    //other stuff
+    // other stuff
     void set_key_code(int kc);
     void set_enabled(bool enabled, bool silent = false);
 
@@ -83,13 +81,9 @@ template<typename T>
 class module_base : public module {
 protected:
     explicit module_base(const module_info& info) : module(info) {}
+
 public:
     // this is why constexpr is epic and useful
-    static constexpr std::uint32_t type_id() {
-        return util::hash::fnv1a(entt::internal::stripped_type_name<T>());
-    }
-    [[nodiscard]] std::uint32_t get_type_id() override {
-        return type_id();
-    }
+    static constexpr std::uint32_t type_id() { return util::hash::fnv1a(entt::internal::stripped_type_name<T>()); }
+    [[nodiscard]] std::uint32_t get_type_id() override { return type_id(); }
 };
-

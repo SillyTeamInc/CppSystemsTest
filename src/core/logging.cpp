@@ -17,22 +17,14 @@
 #endif
 
 namespace core::logging {
+    std::shared_ptr<spdlog::logger> logger;
     namespace {
-        std::shared_ptr<spdlog::logger> g_logger;
         FILE* g_log_file = nullptr;
         bool g_console_owned = false;
 
         // constexpr my beloved
-        constexpr std::string_view k_ansi_reset = "\033[0m";
+
         constexpr const char* k_wine_log_path = "Z:\\tmp\\cppsystems.log";
-
-        std::string ansi_fg(const int r, const int g, const int b) {
-            return fmt::format("\033[38;2;{};{};{}m", r, g, b);
-        }
-
-        std::string ansi_fg(const float r, const float g, const float b) {
-            return ansi_fg(static_cast<int>(r * 255), static_cast<int>(g * 255), static_cast<int>(b * 255));
-        }
 
         spdlog::sink_ptr make_stdout_sink() {
             return std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>(spdlog::color_mode::always);
@@ -76,8 +68,19 @@ namespace core::logging {
 #endif
     }
 
+
+
+    std::string ansi_fg(const int r, const int g, const int b) {
+        return fmt::format("\033[38;2;{};{};{}m", r, g, b);
+    }
+
+    std::string ansi_fg(const float r, const float g, const float b) {
+        return ansi_fg(static_cast<int>(r * 255), static_cast<int>(g * 255), static_cast<int>(b * 255));
+    }
+
+
     // winegdk I fucking love and hate you
-    void init(const spdlog::level::level_enum level) {
+    std::vector<spdlog::sink_ptr> make_sinks() {
         std::vector<spdlog::sink_ptr> sinks;
 
 #ifdef _WIN32
@@ -99,19 +102,24 @@ namespace core::logging {
             sinks.push_back(make_stdout_sink());
         }
 
-        g_logger = std::make_shared<spdlog::logger>("systems_test", sinks.begin(), sinks.end());
-        g_logger->set_level(level);
-        g_logger->flush_on(spdlog::level::trace);
-        g_logger->set_pattern(fmt::format("[{}%H:%M:%S.%e{}] [%^%l%$] %v", ansi_fg(255, 135, 0), k_ansi_reset));
+        return sinks;
+    }
 
-        spdlog::set_default_logger(g_logger);
+    void init(const spdlog::level::level_enum level) {
+        const auto sinks = make_sinks();
+        logger = std::make_shared<spdlog::logger>("systems_test", sinks.begin(), sinks.end());
+        logger->set_level(level);
+        logger->flush_on(spdlog::level::trace);
+        logger->set_pattern(fmt::format("[{}%H:%M:%S.%e{}] [%^%l%$] %v", ansi_fg(255, 135, 0), k_ansi_reset));
+
+        spdlog::set_default_logger(logger);
     }
 
 
     void shutdown() {
         spdlog::debug("Deinitializing logging");
         spdlog::shutdown();
-        g_logger.reset();
+        logger.reset();
 
         if (g_log_file != nullptr) {
             std::fclose(g_log_file);

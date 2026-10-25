@@ -30,6 +30,10 @@
 
 void test_module::on_enable() {
     spdlog::info("test module enabled");
+    
+    dispatcher().listen<base_tick_event, &test_module::on_base_tick>(this);
+    dispatcher().listen<render_event, &test_module::on_render>(this);
+
     auto ci = core::get_client_instance();
     auto lp = ci->getLocalPlayer();
     if (!lp) return;
@@ -38,8 +42,7 @@ void test_module::on_enable() {
     /*auto fovSetting = static_cast<FloatOption*>(ci->getOptions().getIfValid(OptionID::GfxFieldOfView).value());
     spdlog::info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN, fovSetting->VALUE_MAX, fovSetting->mValue, fovSetting->mDefaultValue, fovSetting->DELTA);*/
 
-    dispatcher().listen<base_tick_event, &test_module::on_base_tick>(this);
-    dispatcher().listen<render_event, &test_module::on_render>(this);
+
 }
 
 void test_module::on_disable() {
@@ -47,6 +50,17 @@ void test_module::on_disable() {
 
     dispatcher().deafen<base_tick_event, &test_module::on_base_tick>(this);
     dispatcher().deafen<render_event, &test_module::on_render>(this);
+}
+
+namespace {
+    // Function to show a pointer and a button to copy the pointer in ImGui
+    void show_pointer(const char* label, void* ptr) {
+        ImGui::Text("%s: %p", label, ptr);
+        ImGui::SameLine();
+        if (ImGui::Button(("Copy " + std::string(label)).c_str())) {
+            ImGui::SetClipboardText(fmt::format("{:p}", ptr).c_str());
+        }
+    }
 }
 
 void test_module::on_render(render_event &event) {
@@ -66,6 +80,55 @@ void test_module::on_render(render_event &event) {
     {
         fonts::scope font(font::open_sans, 24);
         ImGui::Text("this is open sans, hello world");
+    }
+
+    auto ci = core::get_client_instance();
+    auto lp = ci->getLocalPlayer();
+
+    if (ImGui::CollapsingHeader("Pointers")) {
+        ImGui::Spacing();
+        auto ci = core::get_client_instance();
+        auto lp = ci->getLocalPlayer();
+        show_pointer("ClientInstance", ci);
+        show_pointer("LocalPlayer", lp);
+        if (lp != nullptr) {
+            auto headRotComp = lp->mContext.tryGetComponent<ActorHeadRotationComponent>();
+            if (headRotComp.has_value()) {
+                show_pointer("ActorHeadRotationComponent", &headRotComp.value());
+                ImGui::TextUnformatted(fmt::format("mYHeadRot={} mYHeadRotO={}", headRotComp->mYHeadRot, headRotComp->mYHeadRotO).c_str());
+            } else {
+                ImGui::Text("ActorHeadRotationComponent: Not found");
+            }
+
+            auto renderRot = lp->mContext.tryGetComponent<RenderRotationComponent>();
+            if (renderRot.has_value()) {
+                show_pointer("RenderRotationComponent", &renderRot.value());
+                ImGui::TextUnformatted(fmt::format("mRot=({}, {})", renderRot->mRot.x, renderRot->mRot.y).c_str());
+            } else {
+                ImGui::Text("RenderRotationComponent: Not found");
+            }
+
+            auto actorRot = lp->mContext.tryGetComponent<ActorRotationComponent>();
+            if (actorRot.has_value()) {
+                show_pointer("ActorRotationComponent", &actorRot.value());
+                ImGui::TextUnformatted(fmt::format("mRot=({}, {})", actorRot->mRot.x, actorRot->mRot.y).c_str());
+            } else {
+                ImGui::Text("ActorRotationComponent: Not found");
+            }
+
+            int i = 0;
+            for (auto &&[id, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
+                MinecraftCamera::CameraDirectLookComponent *compPtr = &component;
+                show_pointer(("CameraDirectLookComponent" + std::to_string(i++)).c_str(), compPtr);
+                ImGui::TextUnformatted(fmt::format("mRotRads=({}, {}) mDelta={} mWrap=({}, {})", compPtr->mRotRads.x,
+                                                   compPtr->mRotRads.y, compPtr->mDelta, compPtr->mWrap.x,
+                                                   compPtr->mWrap.y)
+                                           .c_str());
+                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})", id.rawId,
+                             reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
+                             compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);*/
+            }
+        }
     }
 
     auto codes = keyboard::get_all_keys();

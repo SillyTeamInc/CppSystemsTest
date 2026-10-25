@@ -20,6 +20,13 @@ struct game_signatures {
         } vTable;
     } ClientInstance;
 
+    struct local_player_t {
+        // i think this is the name? either this or _applyTurnDelta
+        // which it wouldn't be probably i don't think the game usually uses _applyTurnDelta
+        // this was found by looking at things that access mYHeadRot in ActorHeadRotationComponent
+        sig::reference<"E8 ? ? ? ? 48 8B ? ? ? 48 31 ? 48 3B ? ? ? ? ? 75 ? 0F 28 ? ? ? 0F 28 ? ? ? 44 0F ? ? ? ? 44 0F ? ? ? ? 48 83 C4", 1> localPlayerTurn;
+    } LocalPlayer;
+
     struct mouse_device_t {
         sig::reference<"E8 ? ? ? ? E9 ? ? ? ? 48 8D ? ? ? ? ? 48 89 8D ? ? ? ? C6 85 ? ? ? ? 01 48", 1> feed;
     } MouseDevice;
