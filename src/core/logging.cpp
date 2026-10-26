@@ -66,6 +66,43 @@ namespace core::logging {
             }
         }
 #endif
+
+        constexpr std::string_view k_main_name = "systems_test";
+
+        std::string name_color(const std::string_view name) {
+            unsigned hash = 2166136261u;
+            for (const unsigned char c : name) {
+                hash ^= c;
+                hash *= 16777619u;
+            }
+            hash = (hash >> 16) ^ hash;
+
+            const float h = static_cast<float>(hash % 360) / 60.0f, s = 0.55f, v = 1.0f;
+            const float c = v * s, x = c * (1.0f - std::fabs(std::fmod(h, 2.0f) - 1.0f)), m = v - c;
+            float r = 0, g = 0, b = 0;
+            switch (static_cast<int>(h)) {
+                case 0: r = c; g = x; break;
+                case 1: r = x; g = c; break;
+                case 2: g = c; b = x; break;
+                case 3: g = x; b = c; break;
+                case 4: r = x; b = c; break;
+                default: r = c; b = x; break;
+            }
+            return ansi_fg(r + m, g + m, b + m);
+        }
+
+        class obj_name_flag : public spdlog::custom_flag_formatter {
+        public:
+            void format(const spdlog::details::log_msg& msg, const std::tm&, spdlog::memory_buf_t& dest) override {
+                const std::string_view name{msg.logger_name.data(), msg.logger_name.size()};
+                if (name == k_main_name) return;
+                fmt::format_to(std::back_inserter(dest), " [{}{}{}]", name_color(name), name, k_ansi_reset);
+            }
+
+            [[nodiscard]] std::unique_ptr<custom_flag_formatter> clone() const override {
+                return std::make_unique<obj_name_flag>();
+            }
+        };
     }
 
 
@@ -107,14 +144,25 @@ namespace core::logging {
 
     void init(const spdlog::level::level_enum level) {
         const auto sinks = make_sinks();
-        logger = std::make_shared<spdlog::logger>("systems_test", sinks.begin(), sinks.end());
+        logger = std::make_shared<spdlog::logger>(std::string(k_main_name), sinks.begin(), sinks.end());
         logger->set_level(level);
         logger->flush_on(spdlog::level::trace);
-        logger->set_pattern(fmt::format("[{}%H:%M:%S.%e{}] [%^%l%$] %v", ansi_fg(255, 135, 0), k_ansi_reset));
+
+        auto formatter = std::make_unique<spdlog::pattern_formatter>();
+        formatter->add_flag<obj_name_flag>('N').set_pattern(
+            fmt::format("[{}%H:%M:%S.%e{}] [%^%l%$]%N %v", ansi_fg(255, 135, 0), k_ansi_reset));
+        logger->set_formatter(std::move(formatter));
 
         spdlog::set_default_logger(logger);
     }
 
+    std::shared_ptr<spdlog::logger> make_logger(const std::string_view name) {
+        if (auto existing = spdlog::get(std::string(name))) return existing;
+
+        auto l = logger->clone(std::string(name));
+        spdlog::register_logger(l);
+        return l;
+    }
 
     void shutdown() {
         spdlog::debug("Deinitializing logging");

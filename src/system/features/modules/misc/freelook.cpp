@@ -34,9 +34,6 @@ void freelook::on_enable() {
         return;
     }
 
-    auto gock = player->getActorHeadRotationComponent();
-    mHeadYaw = {gock->mYHeadRot, gock->mYHeadRotO};
-
     std::size_t cameraCount = 0;
     std::size_t removedUpdateComponents = 0;
     for (auto&& [id, cameraComponent]: player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
@@ -44,7 +41,7 @@ void freelook::on_enable() {
 
         auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
         if (storage->contains(id)) {
-            mCameras[id] = storage->get(id).mUpdateMode;
+            m_cams[id] = storage->get(id).mUpdateMode;
 
             storage->remove(id);
             ++removedUpdateComponents;
@@ -53,21 +50,22 @@ void freelook::on_enable() {
 
     for (auto&& [id, cameraComponent]:
          player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
-        mOriginalRotRads[id] = cameraComponent.mRotRads;
+        m_og_rot_rads[id] = cameraComponent.mRotRads;
     }
 
     for (auto&& [id, cameraComponent]:
          player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
-        mOrbitRotsC[id] = cameraComponent.mCurrentSpherical;
-        mOrbitRotsI[id] = cameraComponent.mIdealSpherical;
+        m_orbit_rots_c[id] = cameraComponent.mCurrentSpherical;
+        m_orbit_rots_i[id] = cameraComponent.mIdealSpherical;
     }
 
 
-    this->mThirdPerson = static_cast<EnumOption*>(
+    this->m_third_person_opt = static_cast<EnumOption*>(
             core::get_client_instance()->getOptions().getIfValid(OptionID::GameThirdperson).value());
-    mLastCameraState = mThirdPerson->mValue;
-    mThirdPerson->mValue = 1;
-    spdlog::info("[freelook] on_enable: saved camera state={}; complete", mLastCameraState);
+    m_last_camera_state = m_third_person_opt->mValue;
+    m_third_person_opt->mValue = 1;
+    log->info("freelook enabled, removed {} UpdatePlayerFromCameraComponents, camera count: {}", removedUpdateComponents,
+              cameraCount);
 }
 
 void freelook::on_disable() {
@@ -84,8 +82,8 @@ void freelook::on_disable() {
 
         auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
         if (!storage->contains(id)) {
-            auto it = mCameras.find(id);
-            if (it == mCameras.end()) {
+            auto it = m_cams.find(id);
+            if (it == m_cams.end()) {
                 continue;
             }
 
@@ -98,26 +96,27 @@ void freelook::on_disable() {
 
     for (auto&& [id, cameraComponent]:
          player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
-        if (!mOriginalRotRads.contains(id)) {
-            spdlog::warn("[freelook] on_disable: no original rotation found for camera id={}", id.rawId);
+        if (!m_og_rot_rads.contains(id)) {
+            log->warn("on_disable: no original rotation found for camera id={}", id.rawId);
             continue;
         }
 
-        cameraComponent.mRotRads = mOriginalRotRads[id];
+        cameraComponent.mRotRads = m_og_rot_rads[id];
     }
 
     for (auto&& [id, cameraComponent]:
          player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
-        if (!mOrbitRotsC.contains(id) || !mOrbitRotsI.contains(id)) {
-            spdlog::warn("[freelook] on_disable: no original orbit rotation found for camera id={}", id.rawId);
+        if (!m_orbit_rots_c.contains(id) || !m_orbit_rots_i.contains(id)) {
+            log->warn("on_disable: no original orbit rotation found for camera id={}", id.rawId);
             continue;
         }
 
-        cameraComponent.mCurrentSpherical = mOrbitRotsC[id];
-        cameraComponent.mIdealSpherical = mOrbitRotsI[id];
+        cameraComponent.mCurrentSpherical = m_orbit_rots_c[id];
+        cameraComponent.mIdealSpherical = m_orbit_rots_i[id];
     }
 
-    mThirdPerson->mValue = mLastCameraState;
+    m_third_person_opt->mValue = m_last_camera_state;
+    log->info("freelook disabled and restored");
 }
 
 void freelook::on_lp_turn(local_player_turn_event& event) {

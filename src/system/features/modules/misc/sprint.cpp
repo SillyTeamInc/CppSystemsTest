@@ -9,6 +9,7 @@
 
 void sprint::on_enable() {
     dispatcher().listen<base_tick_event, &sprint::on_base_tick>(this);
+    log->info("sprint enabled");
 }
 
 void sprint::on_disable() {
@@ -21,7 +22,7 @@ void sprint::on_base_tick(base_tick_event& event) {
     auto lp = static_cast<LocalPlayer*>(event.actor); // Eat my entire ass
     auto mic = lp->mContext.tryGetComponent<MoveInputComponent>();
     if (!mic.has_value()) {
-        spdlog::warn("[sprint] MoveInputComponent not found..?");
+        log->warn("[sprint] MoveInputComponent not found..?");
         return;
     }
 

@@ -14,23 +14,21 @@
 class EnumOption;
 
 class freelook : public module_base<freelook> {
+    EnumOption* m_third_person_opt = nullptr;
+
+    int m_last_camera_state = 0;
+    std::unordered_map<EntityId, glm::vec2> m_og_rot_rads;
+    std::unordered_map<EntityId, int> m_cams{};
+    std::unordered_map<EntityId, Spherical> m_orbit_rots_c{};
+    std::unordered_map<EntityId, Spherical> m_orbit_rots_i{};
 public:
     static constexpr module_info info {"Freelook", "Yeah", category::misc, static_cast<int>(keyboard::key::f), false, false};
 
     explicit freelook() : module_base(info) {}
 
-    int mLastCameraState = 0;
-    glm::vec2 mLookingAngles = glm::vec2(0.0f, 0.0f);
-    bool mHadComponent = false;
-    std::unordered_map<EntityId, glm::vec2> mOriginalRotRads;
-    std::unordered_map<EntityId, int> mCameras{};
-    std::unordered_map<EntityId, Spherical> mOrbitRotsC{};
-    std::unordered_map<EntityId, Spherical> mOrbitRotsI{};
 
 
-    bool mResetRot = false;
-    EnumOption* mThirdPerson = nullptr;
-    glm::vec2 mHeadYaw;
+
 
     void on_enable() override;
     void on_disable() override;

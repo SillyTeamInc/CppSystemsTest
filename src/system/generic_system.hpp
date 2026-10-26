@@ -17,7 +17,6 @@ public:
     virtual ~generic_system() = default;
 
     generic_system(const generic_system&) = delete;
-
     generic_system& operator=(const generic_system&) = delete;
 
     virtual void initialize() = 0;

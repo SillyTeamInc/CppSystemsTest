@@ -12,6 +12,7 @@
 #include "util/types.hpp"
 
 enum class CameraMode : int {
+    Unknown = -1,
     FirstPerson = 0,
     ThirdPerson = 1,
     ThirdPersonFront = 2,
@@ -50,9 +51,14 @@ namespace MinecraftCamera {
             if (mId.mStrHash == FreeHash) return CameraMode::Free;
             if (mId.mStrHash == FollowOrbitHash) return CameraMode::FollowOrbit;
 
-            spdlog::warn("!!!! unknown camera mode hash: {:X} with string {}, defaulting to FirstPerson", mId.mStrHash, mId.mStr);
+            return CameraMode::Unknown;
+        }
 
-            return CameraMode::FirstPerson;
+        std::string to_string() const {
+            return fmt::format("CameraComponent{{mId={}, mOrientation=({}, {}, {}, {}), mPosition=({}, {}, {}), mAspectRatio={}, mFieldOfView={}, mNearPlane={}, mFarPlane={}}}",
+                               mId.mStr, mOrientation.x, mOrientation.y, mOrientation.z, mOrientation.w,
+                               mPosition.x, mPosition.y, mPosition.z,
+                               mAspectRatio, mFieldOfView, mNearPlane, mFarPlane);
         }
     };
 }

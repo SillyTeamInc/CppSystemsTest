@@ -37,9 +37,14 @@ protected:
     bool m_state_locked = false;
 
     bool lock_state(bool locked);
+    std::shared_ptr<spdlog::logger> log; 
 
 public:
-    explicit module(const module_info& info) : m_info(info) { key_code = info.default_key_code; }
+
+    explicit module(const module_info& info) : m_info(info) {
+        key_code = info.default_key_code;
+        log = core::logging::make_logger(info.name);
+    }
 
     int key_code = 0;
 

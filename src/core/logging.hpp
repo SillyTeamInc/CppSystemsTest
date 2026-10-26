@@ -17,6 +17,7 @@ namespace core {
         std::string ansi_fg(float r, float g, float b);
         std::vector<spdlog::sink_ptr> make_sinks();
         void init(spdlog::level::level_enum level = spdlog::level::info);
+        std::shared_ptr<spdlog::logger> make_logger(const std::string_view name);
         void shutdown();
     }
 }

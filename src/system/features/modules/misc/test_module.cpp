@@ -29,7 +29,7 @@
 #include "util/keyboard.hpp"
 
 void test_module::on_enable() {
-    spdlog::info("test module enabled");
+    log->info("test module enabled");
     
     dispatcher().listen<base_tick_event, &test_module::on_base_tick>(this);
     dispatcher().listen<render_event, &test_module::on_render>(this);
@@ -46,7 +46,7 @@ void test_module::on_enable() {
 }
 
 void test_module::on_disable() {
-    spdlog::info("test module disabled");
+    log->info("test module disabled");
 
     dispatcher().deafen<base_tick_event, &test_module::on_base_tick>(this);
     dispatcher().deafen<render_event, &test_module::on_render>(this);
@@ -121,6 +121,11 @@ void test_module::on_render(render_event &event) {
                 ImGui::Text("ActorRotationComponent: Not found");
             }
 
+
+            auto fovSetting = static_cast<FloatOption*>(ci->getOptions().getIfValid(OptionID::GfxFieldOfView).value());
+            show_pointer("GfxFieldOfView FloatOption", fovSetting);
+            if (fovSetting) ImGui::TextUnformatted(fmt::format("VALUE_MIN={} VALUE_MAX={} mValue={}", fovSetting->VALUE_MIN, fovSetting->VALUE_MAX, fovSetting->mValue).c_str());
+
             int i = 0;
             for (auto &&[id, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
                 MinecraftCamera::CameraDirectLookComponent *compPtr = &component;
@@ -133,6 +138,18 @@ void test_module::on_render(render_event &event) {
                              reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
                              compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);*/
             }
+
+            int j = 0;
+            for (auto &&[id, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
+                MinecraftCamera::CameraComponent *compPtr = &component;
+                show_pointer(("CameraComponent_" + std::string(magic_enum::enum_name(component.getMode())) + std::to_string(j++)).c_str(), compPtr);
+                ImGui::TextUnformatted(compPtr->to_string().c_str());
+                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})", id.rawId,
+                             reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
+                             compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);*/
+            }
+
+
         }
     }
 
@@ -197,13 +214,13 @@ void test_module::on_base_tick(base_tick_event &event) {
                      compPtr->mAspectRatio, compPtr->mFieldOfView, compPtr->mNearPlane, compPtr->mFarPlane);
     }
 
-    spdlog::info("[test] ok");*/
+    log->info("[test] ok");*/
 }
 
 void test_module::on_manager_init() {
-    spdlog::info("test module initialized");
+    log->info("test module initialized");
 }
 
 void test_module::on_manager_exit() {
-    spdlog::info("test module exited");
+    log->info("test module exited");
 }

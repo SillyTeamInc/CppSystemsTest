@@ -131,6 +131,11 @@ void main_thread(HMODULE hModule) {
     injected_notification notification(manager);
     notification.on_injected();
 
+    {
+        LocalPlayer* lp = ci->getLocalPlayer();
+        if (lp) lp->displayClientMessage("CppSystemsTest loaded");
+    }
+
     while (!coreSys->m_eject_requested) {
         auto l = ci->getLocalPlayer();
         if (lp != l) {
@@ -151,6 +156,12 @@ void main_thread(HMODULE hModule) {
     manager->shutdown_systems();
 
     util::exceptions::remove_handler();
+
+    {
+        LocalPlayer* lp = ci->getLocalPlayer();
+        if (lp) lp->displayClientMessage("CppSystemsTest unloaded");
+    }
+
     spdlog::info("All cleaned up, cya!");
     core::logging::shutdown();
     FreeLibraryAndExitThread(hModule, 0);

@@ -3,14 +3,15 @@
 //
 #include "module_system.hpp"
 
-#include "misc/test_module.hpp"
-#include "system/event_system.hpp"
-#include "system/systems_manager.hpp"
 #include "events/keyboard_event.hpp"
 #include "events/mod_tick_event.hpp"
 #include "misc/freelook.hpp"
 #include "misc/fullbright.hpp"
 #include "misc/sprint.hpp"
+#include "misc/test_module.hpp"
+#include "misc/zoom.hpp"
+#include "system/event_system.hpp"
+#include "system/systems_manager.hpp"
 
 hvs::event_dispatcher &module_system::dispatcher() const {
     return manager->get<event_system>()->dispatcher();
@@ -24,6 +25,8 @@ void module_system::initialize() {
     add<sprint>();
     add<fullbright>();
     add<freelook>();
+    add<zoom>();
+
     
     for (const auto &module: modules) {
         module->on_manager_init();
@@ -68,8 +71,6 @@ void module_system::shutdown() {
 void module_system::on_keyboard_event(keyboard_event &event) const {
     if (event.is_repeated()) return;
 
-    spdlog::trace(event.to_string());
-
     for (const auto &module: modules) {
         if (module->key_code != event.key_code) continue;
 
@@ -82,8 +83,8 @@ void module_system::on_mod_tick(const mod_tick_event &event) const {
     for (const auto &module: modules) {
         if (module->m_wanted_state != module->m_enabled) {
             module->m_enabled = module->m_wanted_state;
-            spdlog::trace("onClientTick: calling {} on module {}", module->m_enabled ? "onEnable" : "onDisable",
-                          module->get_name());
+            /*spdlog::trace("onClientTick: calling {} on module {}", module->m_enabled ? "onEnable" : "onDisable",
+                          module->get_name());*/
             if (module->m_enabled)module->on_enable();
             else module->on_disable();
         }

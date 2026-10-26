@@ -16,11 +16,12 @@ void fullbright::on_enable() {
     this->gamma->mValue = 10.0f;
 
     dispatcher().listen<base_tick_event, &fullbright::on_base_tick>(this);
+    log->info("fullbright enabled");
 }
 
 void fullbright::on_disable() {
     if (!this->gamma) {
-        spdlog::warn("[fullbright] help me");
+        log->warn("help me");
     }
     this->gamma->mValue = this->m_prev_gamma;
     this->gamma->VALUE_MAX = 1.0f;

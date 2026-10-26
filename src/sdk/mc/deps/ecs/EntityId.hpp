@@ -6,9 +6,15 @@
 #include <entt/entt.hpp>
 
 #include "sdk/mc/deps/core/utility/optional_ref.hpp"
+#include "sdk/mc/deps/minecraft_camera/components/CameraBlendStateComponent.hpp"
+#include "sdk/mc/deps/minecraft_camera/components/CameraRenderFirstPersonObjectsComponent.hpp"
+#include "sdk/mc/deps/vanilla_camera/VanillaCameraApiComponent.hpp"
 #include "sdk/mc/entity/components/CameraComponent.hpp"
+#include "sdk/mc/entity/components/CameraCustomFovComponent.hpp"
 #include "sdk/mc/entity/components/CameraDirectLookComponent.hpp"
 #include "sdk/mc/entity/components/CameraOrbitComponent.hpp"
+
+
 #include "sdk/mc/entity/components/FlagComponent.hpp"
 #include "util/types.hpp"
 
@@ -57,6 +63,10 @@ ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraComponent)
 ENTT_COMPONENT_TRAITS(VanillaCamera::UpdatePlayerFromCameraComponent)
 ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraOrbitComponent)
 ENTT_COMPONENT_TRAITS(PlayerStateAffectsRenderingComponent)
+ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraCustomFovComponent)
+ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraRenderFirstPersonObjectsComponent)
+
+ENTT_COMPONENT_TRAITS(CameraAPIComponent)
 
 
 struct RenderRotationComponent {
@@ -73,6 +83,7 @@ public:
 
 ENTT_COMPONENT_TRAITS(ActorRotationComponent)
 ENTT_COMPONENT_TRAITS(RenderRotationComponent)
+ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraBlendStateComponent);
 
 
 #undef ENTT_COMPONENT_TRAITS

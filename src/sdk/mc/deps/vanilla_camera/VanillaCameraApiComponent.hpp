@@ -11,3 +11,9 @@ struct VanillaCameraAPIComponent {
 public:
     std::unique_ptr<IVanillaCameraAPI> mApi;
 };
+
+class ICameraAPI {};
+
+struct CameraAPIComponent {
+    std::unique_ptr<ICameraAPI> mApi;
+};
