@@ -205,6 +205,11 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/system/features/modules/misc/zoom.hpp
         src/sdk/mc/entity/components/CameraCustomFovComponent.hpp
         src/sdk/mc/deps/minecraft_camera/components/CameraRenderFirstPersonObjectsComponent.hpp
+        src/sdk/mc/client/renderer/game/LevelRenderer.hpp
+        src/system/hooks/get_fov_hook.cpp
+        src/system/hooks/get_fov_hook.hpp
+        src/sdk/mc/client/game/PlayerListener.hpp
+        src/events/fov_check_event.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

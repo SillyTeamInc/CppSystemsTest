@@ -38,7 +38,6 @@ public:
     [[nodiscard]] hvs::event_dispatcher& dispatcher() const;
     void initialize() override;
     void shutdown() override;
-
 private:
     void on_keyboard_event(keyboard_event& event) const;
     void on_mod_tick(const mod_tick_event& event) const;

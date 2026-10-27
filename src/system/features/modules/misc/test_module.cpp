@@ -6,14 +6,15 @@
 
 #include <fstream>
 
-#include "sdk/mc/client/game/ClientInstance.hpp"
-#include "sdk/mc/entity/components/MoveInputComponent.hpp"
+#include <nlohmann/json.hpp>
 #include "core/core.hpp"
-#include "sdk/mc/options/option_types/OptionID.hpp"
-#include "sdk/mc/world/actor/Actor.hpp"
+#include "sdk/mc/client/game/ClientInstance.hpp"
+#include "sdk/mc/client/renderer/game/LevelRenderer.hpp"
+#include "sdk/mc/entity/components/MoveInputComponent.hpp"
 #include "sdk/mc/options/IOptionsReader.hpp"
 #include "sdk/mc/options/option_types/Option.hpp"
-#include <nlohmann/json.hpp>
+#include "sdk/mc/options/option_types/OptionID.hpp"
+#include "sdk/mc/world/actor/Actor.hpp"
 
 #include "events/base_tick_event.hpp"
 #include "events/render_event.hpp"
@@ -22,7 +23,7 @@
 #include "sdk/mc/entity/components/CameraDirectLookComponent.hpp"
 #include "sdk/mc/options/option_types/FloatOption.hpp"
 #include "util/option_dumper/option_dumper.hpp"
-
+#include "system/features/modules/module_system.hpp"
 #include <imgui.h>
 
 #include "util/fonts.hpp"
@@ -41,7 +42,6 @@ void test_module::on_enable() {
     //option_dumper::dump_options();
     /*auto fovSetting = static_cast<FloatOption*>(ci->getOptions().getIfValid(OptionID::GfxFieldOfView).value());
     spdlog::info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN, fovSetting->VALUE_MAX, fovSetting->mValue, fovSetting->mDefaultValue, fovSetting->DELTA);*/
-
 
 }
 
@@ -66,34 +66,53 @@ namespace {
 void test_module::on_render(render_event &event) {
 
     ImGui::Begin("test_module");
-    ImGui::Text("test_module");
-    std::string_view escape_key_text = keyboard::key_to_string(keyboard::key::escape);
-    std::string_view capslock = keyboard::key_to_string(keyboard::key::caps_lock);
-    ImGui::Text("Escape: %s", escape_key_text.data());
-    ImGui::Text("Caps Lock: %s", capslock.data());
 
-    if (ImGui::Button("Don't click me")) {
+    if (ImGui::Button("Don't click me :3")) {
         int* ptr = nullptr;
         *ptr = 0xB00B5; // haha funny
     }
 
-    {
-        fonts::scope font(font::comfortaa, 24);
-        ImGui::Text("this is comfortaa, hello world");
-    }
 
-    {
-        fonts::scope font(font::open_sans, 24);
-        ImGui::Text("this is open sans, hello world");
-    }
 
     auto ci = core::get_client_instance();
     auto lp = ci->getLocalPlayer();
 
+    if (ImGui::CollapsingHeader("Modules")) {
+        for (auto& module : get_module_system()->modules) {
+            std::string name = std::string(module->get_name());
+            ImGui::Text("%s: %s", name.c_str(), module->is_enabled() ? "Enabled" : "Disabled");
+            ImGui::SameLine();
+            if (ImGui::Button(("Toggle " + std::string(module->get_name())).c_str())) {
+                module->toggle();
+            }
+        }
+    }
+
+
+    if (ImGui::CollapsingHeader("Font Tests")) {
+        ImGui::Spacing();
+
+        {
+            fonts::scope font(font::comfortaa, 24);
+            ImGui::Text("this is comfortaa, hello world");
+        }
+
+        {
+            fonts::scope font(font::open_sans, 24);
+            ImGui::Text("this is open sans, hello world");
+        }
+    }
+
     if (ImGui::CollapsingHeader("Pointers")) {
         ImGui::Spacing();
-        auto ci = core::get_client_instance();
-        auto lp = ci->getLocalPlayer();
+
+        LevelRenderer* lr = ci->getLevelRenderer();
+        show_pointer("LevelRenderer", lr);
+        if (lr) {
+            auto lrp = lr->getLevelRendererPlayer();
+            show_pointer("LevelRendererPlayer", lrp);
+        }
+
         show_pointer("ClientInstance", ci);
         show_pointer("LocalPlayer", lp);
         if (lp != nullptr) {
@@ -179,8 +198,6 @@ void test_module::on_render(render_event &event) {
     }
 
     ImGui::End();
-    static bool open = true;
-    ImGui::ShowDemoWindow(&open);
 }
 
 void test_module::on_base_tick(base_tick_event &event) {

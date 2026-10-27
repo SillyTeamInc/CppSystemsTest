@@ -593,6 +593,15 @@ class Player : public ::Mob {
 
 class LocalPlayer : public ::Player {
 public:
+    class RegionListener {
+    public:
+        // NOLINTBEGIN
+        virtual ~RegionListener() = default;
+
+        virtual void onRegionDestroyed() = 0;
+        // NOLINTEND
+    };
+
     // NOLINTBEGIN
     virtual ~LocalPlayer() /*override*/ = 0;
     virtual void reloadHardcodedClient(::ActorInitializationMethod method) /*override*/;

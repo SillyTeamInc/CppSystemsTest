@@ -20,6 +20,10 @@ public:
 
     void on_base_tick(base_tick_event &event);
 
+    bool can_be_toggled() override {
+        return true;
+    };
+
     void on_manager_init() override;
     void on_manager_exit() override;
 };

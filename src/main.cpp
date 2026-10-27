@@ -37,6 +37,7 @@
 #include "system/render/render_system.hpp"
 #include <embedded/resources.hpp>
 
+#include "sdk/mc/client/renderer/game/LevelRenderer.hpp"
 #include "util/exceptions.hpp"
 
 class injected_notification {
@@ -123,6 +124,7 @@ void main_thread(HMODULE hModule) {
     spdlog::info("ClientInstance={:X}", reinterpret_cast<std::uintptr_t>(ci));
     spdlog::info("ClientInstance from core={:X}", reinterpret_cast<std::uintptr_t>(core::get_client_instance()));
     spdlog::info("press end to eject the dll");
+
 
     void* lp = nullptr;
 

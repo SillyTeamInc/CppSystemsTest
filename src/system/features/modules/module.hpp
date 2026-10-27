@@ -55,8 +55,11 @@ public:
     virtual void on_disable() {}
     virtual void on_manager_init() {}
     virtual void on_manager_exit() {}
-    // this should not be overridden by modules
+
     virtual std::uint32_t get_type_id() = 0;
+    // i think what most people would do for this is use a std::function?
+    // but this should be good enough and shouldnt be a problem
+    virtual bool can_be_toggled();
 
     // getters
     [[nodiscard]] int get_default_key_code() const;
@@ -90,5 +93,5 @@ protected:
 public:
     // this is why constexpr is epic and useful
     static constexpr std::uint32_t type_id() { return util::hash::fnv1a(entt::internal::stripped_type_name<T>()); }
-    [[nodiscard]] std::uint32_t get_type_id() override { return type_id(); }
+    [[nodiscard]] std::uint32_t get_type_id() final { return type_id(); }
 };

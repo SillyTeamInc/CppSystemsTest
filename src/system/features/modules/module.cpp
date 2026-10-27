@@ -21,6 +21,13 @@ bool module::lock_state(bool locked) {
     return m_state_locked;
 }
 
+bool module::can_be_toggled() {
+    auto ci = core::get_client_instance();
+    if (!ci) return false; // shouldnt happen but whatever
+
+    return ci->getMouseGrabbed();
+}
+
 int module::get_default_key_code() const {
     return m_info.default_key_code;
 }

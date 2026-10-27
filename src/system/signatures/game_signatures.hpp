@@ -3,9 +3,10 @@
 //
 #pragma once
 
-#include "sig.hpp"
 #include <system/signatures/basic_signature_system.hpp>
 #include "basic_signature_system.hpp"
+#include "sdk/mc/client/renderer/game/LevelRenderer.hpp"
+#include "sig.hpp"
 
 // sigs should be accurate to their naming convention as well excluding the struct names
 // all sigs here get scanned and don't need to be manually added anywhere else.
@@ -26,6 +27,11 @@ struct game_signatures {
         // this was found by looking at things that access mYHeadRot in ActorHeadRotationComponent
         sig::reference<"E8 ? ? ? ? 48 8B ? ? ? 48 31 ? 48 3B ? ? ? ? ? 75 ? 0F 28 ? ? ? 0F 28 ? ? ? 44 0F ? ? ? ? 44 0F ? ? ? ? 48 83 C4", 1> localPlayerTurn;
     } LocalPlayer;
+
+    struct level_renderer_player_t {
+        // i sort of stumbled upon the function i needed while looking for something else lmfao
+        sig::reference<"E8 ? ? ? ? E9 ? ? ? ? 31 C0 E9 ? ? ? ? 48 8B ? ? ? ? ? 48 8B", 1> getFov;
+    } LevelRendererPlayer;
 
     struct mouse_device_t {
         sig::reference<"E8 ? ? ? ? E9 ? ? ? ? 48 8D ? ? ? ? ? 48 89 8D ? ? ? ? C6 85 ? ? ? ? 01 48", 1> feed;

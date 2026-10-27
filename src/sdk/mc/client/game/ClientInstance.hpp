@@ -4,6 +4,7 @@
 #pragma once
 #include <set>
 
+#include "PlayerListener.hpp"
 #include "core/sdk_base.hpp"
 #include "glm/vec2.hpp"
 #include "sdk/mc/deps/core/utility/EnableNonOwnerReferences.hpp"
@@ -647,22 +648,13 @@ namespace Core {
     };
 }
 
-class PlayerListener {
-public:
-    // NOLINTBEGIN
-    virtual ~PlayerListener() = default;
-    virtual void onWillChangeDimension(::Player& player);
-    virtual void onDimensionChanged(::Player& player);
-    virtual void onPlayerDestruction(::Player& player);
-    // NOLINTEND
-};
+
 
 
 
 
 class GameCallbacks {
 public:
-    // virtual functions
     // NOLINTBEGIN
     virtual ~GameCallbacks() = default;
     virtual void onLevelCorrupt() = 0;

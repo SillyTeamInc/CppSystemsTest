@@ -27,7 +27,6 @@ void module_system::initialize() {
     add<freelook>();
     add<zoom>();
 
-    
     for (const auto &module: modules) {
         module->on_manager_init();
         // this is on-init, so we don't want to use set_enabled.
@@ -73,6 +72,7 @@ void module_system::on_keyboard_event(keyboard_event &event) const {
 
     for (const auto &module: modules) {
         if (module->key_code != event.key_code) continue;
+        if (!module->can_be_toggled()) continue;
 
         if (!module->is_toggle()) module->set_enabled(event.is_down);
         else if (event.is_down) module->toggle();
