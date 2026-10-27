@@ -49,7 +49,9 @@ struct EntityIdTraits {
     static constexpr entity_type version_mask = 0x7FF;
 };
 
+// flag/empty components dont use these traits afaik
 #define ENTT_COMPONENT_TRAITS(Type)                                                                                    \
+    static_assert (!std::is_empty_v<Type>, "component type " #Type " is not allowed to be empty");                     \
     template<>                                                                                                         \
     struct entt::component_traits<Type, EntityId> {                                                                    \
         using element_type = Type;                                                                                     \
@@ -62,10 +64,7 @@ ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraDirectLookComponent)
 ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraComponent)
 ENTT_COMPONENT_TRAITS(VanillaCamera::UpdatePlayerFromCameraComponent)
 ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraOrbitComponent)
-ENTT_COMPONENT_TRAITS(PlayerStateAffectsRenderingComponent)
 ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraCustomFovComponent)
-ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraRenderFirstPersonObjectsComponent)
-
 ENTT_COMPONENT_TRAITS(CameraAPIComponent)
 
 
