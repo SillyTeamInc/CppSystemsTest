@@ -91,13 +91,14 @@ public:
 
 void main_thread(HMODULE hModule) {
     core::logging::init(spdlog::level::trace);
+    auto injectTime = std::chrono::high_resolution_clock::now();
     spdlog::info("hello world!!!");
     util::exceptions::attach_handler();
 
     const auto manager = systems_manager::i();
     auto* coreSys = manager->add_system<core_system>(hModule);
 
-    auto* eventSys = manager->add_system<event_system>(); // the dispatcher is available at add time heres :3
+    auto* eventSys = manager->add_system<event_system>();
     auto* sigSys = manager->add_system<signature_system>();
     manager->add_system<hook_system>();
     manager->add_system<render_system>();
@@ -105,24 +106,8 @@ void main_thread(HMODULE hModule) {
 
     manager->initialize_systems();
 
-    entt::type_hash<MoveInputComponent> typehash = entt::type_hash<MoveInputComponent>();
-    constexpr auto stripped = entt::internal::stripped_type_name<MoveInputComponent>();
-    spdlog::info("stripped type name: " + std::string(stripped));
-    spdlog::info("type hash of MoveInputComponent: {:X}", typehash.value());
+    ClientInstance* ci = core::get_client_instance();
 
-    spdlog::info("getLocalPlayer addr={:X}", sigSys->sigs().ClientInstance.getLocalPlayer.value());
-
-    MainGameCore::WinMain* winMain = MainGameCore::WinMain::get();
-    Bedrock::Platform_GameCore* platform = winMain->mPlatform;
-    Bedrock::GameHolder* holder = platform->mHolder;
-    MinecraftGame* game = holder->mGame;
-    ClientInstance* ci = game->getPrimaryClientInstance();
-    spdlog::info("MainGameCore::WinMain instance={:X}", reinterpret_cast<std::uintptr_t>(winMain));
-    spdlog::info("Bedrock::Platform_GameCore mPlatform_Shim={:X}", reinterpret_cast<std::uintptr_t>(platform));
-    spdlog::info("Bedrock::GameHolder mGame={:X}", reinterpret_cast<std::uintptr_t>(holder));
-    spdlog::info("MinecraftGame instance={:X}", reinterpret_cast<std::uintptr_t>(game));
-    spdlog::info("ClientInstance={:X}", reinterpret_cast<std::uintptr_t>(ci));
-    spdlog::info("ClientInstance from core={:X}", reinterpret_cast<std::uintptr_t>(core::get_client_instance()));
     spdlog::info("press end to eject the dll");
 
 
@@ -133,9 +118,14 @@ void main_thread(HMODULE hModule) {
     injected_notification notification(manager);
     notification.on_injected();
 
+    auto now = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - injectTime).count();
+    spdlog::info("init took {} ms", duration);
+
     {
         LocalPlayer* lp = ci->getLocalPlayer();
         if (lp) lp->displayClientMessage("CppSystemsTest loaded");
+        ci->playUI("random.orb", 0.5f, 1.f);
     }
 
     while (!coreSys->m_eject_requested) {
@@ -162,6 +152,7 @@ void main_thread(HMODULE hModule) {
     {
         LocalPlayer* lp = ci->getLocalPlayer();
         if (lp) lp->displayClientMessage("CppSystemsTest unloaded");
+        ci->playUI("random.orb", 0.5f, 0.5f);
     }
 
     spdlog::info("All cleaned up, cya!");

@@ -26,6 +26,7 @@
 #include "system/features/modules/module_system.hpp"
 #include <imgui.h>
 
+#include "sdk/mc/options/option_types/IntOption.hpp"
 #include "util/fonts.hpp"
 #include "util/keyboard.hpp"
 
@@ -88,6 +89,12 @@ void test_module::on_render(render_event &event) {
         }
     }
 
+    if (ImGui::CollapsingHeader("Stuff")) {
+        ImGui::Spacing();
+
+        if (ImGui::Button("Play Sound"))
+            ci->playUI("random.orb", 1.f, 1.f);
+    }
 
     if (ImGui::CollapsingHeader("Font Tests")) {
         ImGui::Spacing();

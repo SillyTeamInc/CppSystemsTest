@@ -262,7 +262,7 @@ target_include_directories(CppSystemsTest PRIVATE src)
 
 target_link_libraries(CppSystemsTest PRIVATE imgui::imgui glm d3d12 dxgi d3dcompiler Microsoft.GSL::GSL nlohmann_json EnTT::EnTT spdlog::spdlog kiero magic_enum libhat::libhat Boost::pfr minhook runtimeobject.lib)
 
-set_property(TARGET CppSystemsTest spdlog magic_enum glm libhat minhook PROPERTY MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDLL>$<$<CONFIG:Release>:MultiThreaded>")
+set_property(TARGET CppSystemsTest spdlog kiero kiero-core magic_enum glm libhat minhook PROPERTY MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDLL>$<$<CONFIG:Release>:MultiThreaded>")
 
 target_precompile_headers(CppSystemsTest PRIVATE "src/pch.hpp")
 
