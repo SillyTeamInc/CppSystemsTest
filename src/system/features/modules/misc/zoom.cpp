@@ -7,19 +7,11 @@
 #include <imgui.h>
 
 #include "events/fov_check_event.hpp"
-#include "events/moused_event.hpp"
 #include "events/local_player_turn_event.hpp"
-
+#include "events/moused_event.hpp"
 #include "sdk/mc/client/game/ClientInstance.hpp"
-#include "sdk/mc/deps/minecraft_camera/components/CameraBlendStateComponent.hpp"
-#include "sdk/mc/deps/minecraft_camera/components/CameraRenderFirstPersonObjectsComponent.hpp"
-#include "sdk/mc/deps/vanilla_camera/VanillaCameraApiComponent.hpp"
-#include "sdk/mc/entity/components/CameraComponent.hpp"
-#include "sdk/mc/entity/components/CameraCustomFovComponent.hpp"
-
 #include "sdk/mc/options/IOptionsReader.hpp"
 #include "sdk/mc/options/option_types/FloatOption.hpp"
-
 #include "sdk/mc/world/actor/Actor.hpp"
 
 void zoom::on_enable() {
@@ -40,11 +32,6 @@ void zoom::on_disable() {
     dispatcher().deafen<moused_event, &zoom::on_mouse_event>(this);
     dispatcher().deafen<local_player_turn_event, &zoom::on_lp_turn>(this);
 
-    auto ci = core::get_client_instance();
-    auto lp = ci->getLocalPlayer();
-    if (!lp)
-        return;
-
     m_target_mult = 1.f;
 }
 
@@ -56,21 +43,15 @@ void zoom::on_fov_event(fov_check_event::post& event) {
 }
 
 void zoom::on_mouse_event(moused_event& event) {
-    if (event.action_button_id == 4)
-    {
-        float chipsAndMult = m_target_mult * 4.f;
-        chipsAndMult = std::clamp(chipsAndMult, 0.001f, 1.f);
-
+    if (event.action_button_id == 4) {
         constexpr float step = 0.075f;
 
-        if(event.button_data == 0x78 || event.button_data == 0x7F)
-        {
-            m_target_mult -= step * chipsAndMult;
-            event.cancel();
-        }
-        else if (event.button_data == 0x88 || event.button_data == 0x80 || event.button_data == -0x78 || event.button_data == 0xFF80) // am i stupid?
-        {
-            m_target_mult += step * chipsAndMult;
+        const auto delta = static_cast<int8_t>(event.button_data);
+
+        if (delta != 0) {
+            const float scale = std::clamp(m_target_mult * 4.f, 0.001f, 1.f);
+
+            m_target_mult += (delta > 0 ? -step : step) * scale;
             event.cancel();
         }
     }
@@ -98,16 +79,17 @@ void zoom::on_render(render_event& event) {
         return;
     }
 
-    m_target_mult = std::clamp(m_target_mult, 0.01f, 1.f);
-    float joker = ImGui::GetIO().DeltaTime;
-    m_current_mult = std::lerp(m_current_mult, m_target_mult, joker * 12.f);
+    float joker = 1.f - std::exp(-12.f * ImGui::GetIO().DeltaTime);
+    m_current_mult += (m_target_mult - m_current_mult) * joker;
+    // floats make me angry sometimes
+    if (std::abs(m_current_mult - m_target_mult) < 0.0001f)
+        m_current_mult = m_target_mult;
 }
 bool zoom::can_be_toggled() { return core::get_client_instance()->getMouseGrabbed() || m_enabled; }
 
 void zoom::on_manager_init() {
     dispatcher().listen<render_event, &zoom::on_render>(this);
     dispatcher().listen<fov_check_event::post, &zoom::on_fov_event>(this);
-
 }
 void zoom::on_manager_exit() {
     dispatcher().deafen<render_event, &zoom::on_render>(this);
