@@ -115,6 +115,7 @@ void freelook::on_disable() {
         cameraComponent.mIdealSpherical = m_orbit_rots_i[id];
     }
 
+
     m_third_person_opt->mValue = m_last_camera_state;
     log->info("freelook disabled and restored");
 }
