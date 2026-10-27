@@ -61,14 +61,16 @@ void zoom::on_mouse_event(moused_event& event) {
         float chipsAndMult = m_target_mult * 4.f;
         chipsAndMult = std::clamp(chipsAndMult, 0.001f, 1.f);
 
+        constexpr float step = 0.075f;
+
         if(event.button_data == 0x78 || event.button_data == 0x7F)
         {
-            m_target_mult -= 0.05f * chipsAndMult;
+            m_target_mult -= step * chipsAndMult;
             event.cancel();
         }
         else if (event.button_data == 0x88 || event.button_data == 0x80 || event.button_data == -0x78 || event.button_data == 0xFF80) // am i stupid?
         {
-            m_target_mult += 0.05f * chipsAndMult;
+            m_target_mult += step * chipsAndMult;
             event.cancel();
         }
     }
@@ -82,8 +84,7 @@ void zoom::on_lp_turn(local_player_turn_event& event) {
 
     // i almost forgot i had this event i can't lie
 
-    float chipsAndMult = m_target_mult * 2.25f;
-    chipsAndMult = std::clamp(chipsAndMult, 0.001f, 1.f);
+    float chipsAndMult = std::clamp(m_current_mult, 0.05f, 1.f);
 
     event.deltaRots->x *= chipsAndMult;
     event.deltaRots->y *= chipsAndMult;

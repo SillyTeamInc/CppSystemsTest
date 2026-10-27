@@ -14,7 +14,7 @@ namespace fov_check_event { class post; }
 
 class zoom : public module_base<zoom> {
 public:
-    static constexpr float TARGET = 0.40f;
+    static constexpr float TARGET = 0.30f;
 
     static constexpr module_info info {"Zoom", "Zooming everywhere", category::misc, static_cast<int>(keyboard::key::c), false, false};
 
