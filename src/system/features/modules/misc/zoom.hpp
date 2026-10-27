@@ -14,7 +14,7 @@ namespace fov_check_event { class post; }
 
 class zoom : public module_base<zoom> {
 public:
-    static constexpr float TARGET = 0.10;
+touch    static constexpr float TARGET = 0.40f;
 
     static constexpr module_info info {"Zoom", "Zooming everywhere", category::misc, static_cast<int>(keyboard::key::c), false, false};
 
@@ -29,6 +29,7 @@ public:
     void on_mouse_event(moused_event& event);
     void on_lp_turn(local_player_turn_event& event);
     void on_render(render_event& event);
+    bool can_be_toggled() override;
 
     void on_manager_init() override;
     void on_manager_exit() override;

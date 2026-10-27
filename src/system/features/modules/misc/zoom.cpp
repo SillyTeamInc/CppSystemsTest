@@ -82,7 +82,7 @@ void zoom::on_lp_turn(local_player_turn_event& event) {
 
     // i almost forgot i had this event i can't lie
 
-    float chipsAndMult = m_target_mult * 3.75f;
+    float chipsAndMult = m_target_mult * 2.25f;
     chipsAndMult = std::clamp(chipsAndMult, 0.001f, 1.f);
 
     event.deltaRots->x *= chipsAndMult;
@@ -99,8 +99,9 @@ void zoom::on_render(render_event& event) {
 
     m_target_mult = std::clamp(m_target_mult, 0.01f, 1.f);
     float joker = ImGui::GetIO().DeltaTime;
-    m_current_mult = std::lerp(m_current_mult, m_target_mult, joker * 8.f);
+    m_current_mult = std::lerp(m_current_mult, m_target_mult, joker * 12.f);
 }
+bool zoom::can_be_toggled() { return core::get_client_instance()->getMouseGrabbed() || m_enabled; }
 
 void zoom::on_manager_init() {
     dispatcher().listen<render_event, &zoom::on_render>(this);
