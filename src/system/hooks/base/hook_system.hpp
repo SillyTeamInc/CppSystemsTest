@@ -18,6 +18,8 @@ class hook_system_base : public complex_system {
 
     bool init_minhook();
 
+    static void apply_enabled(const std::vector<hook_base*>& hooks, bool enabled);
+
 protected:
     virtual void add_hooks() = 0;
 
@@ -25,18 +27,19 @@ protected:
     void add_hook() {
         m_hooks.push_back(&add_subsystem<T>());
     }
+
 public:
     void initialize_subsystems() override;
     void initialize() override;
     void shutdown() override;
     void shutdown_subsystems() override;
+
 private:
     bool m_listening = false;
     std::size_t m_pending = 0;
-    void on_mod_tick(mod_tick_event &event);
+    void on_mod_tick(mod_tick_event& event);
     void start_listening();
     void stop_listening();
-
 };
 
 template<typename... Hooks>
@@ -63,7 +66,5 @@ class basic_hook_system final : public hook_system_base {
         (add_entry(std::type_identity<H>{}), ...);
     }
 
-    void add_hooks() override {
-        (add_entry(std::type_identity<Entries>{}), ...);
-    }
+    void add_hooks() override { (add_entry(std::type_identity<Entries>{}), ...); }
 };

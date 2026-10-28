@@ -21,6 +21,31 @@ bool hook_system_base::init_minhook() {
     return true;
 }
 
+void hook_system_base::apply_enabled(const std::vector<hook_base*>& hooks, bool enabled) {
+    std::vector<hook_base*> queued;
+    queued.reserve(hooks.size());
+    for (auto* hook: hooks) {
+        if (hook->queue_enabled(enabled))
+            queued.push_back(hook);
+    }
+
+    if (queued.empty())
+        return;
+
+    if (const auto status = MH_ApplyQueued(); status != MH_OK) {
+        // tbh idk how this would fail but might as well handle it
+        spdlog::warn("batch {} failed [{}], trying to iterate instead!", enabled ? "enable" : "disable",
+                     MH_StatusToString(status));
+        for (auto* hook: queued)
+            hook->set_enabled(enabled);
+        return;
+    }
+
+    for (auto* hook: queued)
+        hook->commit_enabled(enabled);
+    spdlog::info("{} {} hooks from one batch", enabled ? "enabled" : "disabled", queued.size());
+}
+
 void hook_system_base::initialize_subsystems() {
     if (init_minhook()) {
         add_hooks();
@@ -32,15 +57,17 @@ void hook_system_base::initialize() {
     complex_system::initialize();
 
     std::size_t installed = 0;
+    std::vector<hook_base*> to_enable;
     m_pending = 0;
     for (auto* hook: m_hooks) {
         if (hook->installed()) {
             ++installed;
             if (hook->start_enabled())
-                hook->set_enabled(true);
+                to_enable.push_back(hook);
         } else if (hook->state() == hook_state::pending)
             ++m_pending;
     }
+    apply_enabled(to_enable, true);
 
     spdlog::info("{}/{} hooks installed, {} pending", installed, m_hooks.size(), m_pending);
     if (m_pending > 0)
@@ -51,8 +78,7 @@ void hook_system_base::shutdown() {
     stop_listening();
 
     // prevents hooks from being removed while theyre being executed
-    for (auto* hook: m_hooks)
-        hook->set_enabled(false);
+    apply_enabled(m_hooks, false);
     hook_base::wait_for_detours();
 
     complex_system::shutdown();
@@ -71,6 +97,7 @@ void hook_system_base::on_mod_tick(mod_tick_event&) {
     if (m_pending == 0)
         return;
 
+    std::vector<hook_base*> to_enable;
     for (auto* hook: m_hooks) {
         if (hook->state() != hook_state::pending)
             continue;
@@ -78,11 +105,12 @@ void hook_system_base::on_mod_tick(mod_tick_event&) {
         if (hook->try_install()) {
             --m_pending;
             if (hook->start_enabled())
-                hook->set_enabled(true);
+                to_enable.push_back(hook);
         } else if (hook->state() == hook_state::failed || hook->state() == hook_state::skipped) {
             --m_pending;
         }
     }
+    apply_enabled(to_enable, true);
 
     if (m_pending == 0)
         spdlog::info("all hooks installed!!");

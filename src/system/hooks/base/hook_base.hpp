@@ -25,6 +25,9 @@ class hook_base : public generic_system {
     bool m_logged_waiting = false;
     static inline std::atomic<int> s_in_flight{0};
 
+    bool queue_enabled(bool enabled);
+    void commit_enabled(bool enabled);
+
 public:
     struct detour_guard {
         detour_guard() { s_in_flight.fetch_add(1); }
