@@ -139,7 +139,7 @@ namespace keyboard {
         oem_minus = 0xBD,
         oem_period = 0xBE,
         oem_2 = 0xBF,
-        oem_3 = 0xC0,
+        grave_accent = 0xC0,// oem_3
         gamepad_a = 0xC3,
         gamepad_b = 0xC4,
         gamepad_x = 0xC5,

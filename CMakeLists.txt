@@ -210,6 +210,15 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/system/hooks/get_fov_hook.hpp
         src/sdk/mc/client/game/PlayerListener.hpp
         src/events/fov_check_event.hpp
+        src/system/features/modules/misc/freecam.cpp
+        src/system/features/modules/misc/freecam.hpp
+        src/sdk/mc/entity/components/ActorRotationComponent.hpp
+        src/sdk/mc/entity/components/RenderRotationComponent.hpp
+        src/sdk/mc/world/phys/AABB.hpp
+        src/sdk/mc/entity/components/AABBShapeComponent.hpp
+        src/sdk/mc/entity/components/StateVectorComponent.hpp
+        src/sdk/mc/entity/components/RenderPositionComponent.hpp
+        src/sdk/mc/client/input/Keymapping.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

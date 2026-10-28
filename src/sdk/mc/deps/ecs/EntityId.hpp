@@ -9,11 +9,12 @@
 #include "sdk/mc/deps/minecraft_camera/components/CameraBlendStateComponent.hpp"
 #include "sdk/mc/deps/minecraft_camera/components/CameraRenderFirstPersonObjectsComponent.hpp"
 #include "sdk/mc/deps/vanilla_camera/VanillaCameraApiComponent.hpp"
+#include "sdk/mc/entity/components/ActorRotationComponent.hpp"
 #include "sdk/mc/entity/components/CameraComponent.hpp"
 #include "sdk/mc/entity/components/CameraCustomFovComponent.hpp"
 #include "sdk/mc/entity/components/CameraDirectLookComponent.hpp"
 #include "sdk/mc/entity/components/CameraOrbitComponent.hpp"
-
+#include "sdk/mc/entity/components/RenderRotationComponent.hpp"
 
 #include "sdk/mc/entity/components/FlagComponent.hpp"
 #include "util/types.hpp"
@@ -51,7 +52,7 @@ struct EntityIdTraits {
 
 // flag/empty components dont use these traits afaik
 #define ENTT_COMPONENT_TRAITS(Type)                                                                                    \
-    static_assert (!std::is_empty_v<Type>, "component type " #Type " is not allowed to be empty");                     \
+    static_assert(!std::is_empty_v<Type>, "component type " #Type " is not allowed to be empty");                      \
     template<>                                                                                                         \
     struct entt::component_traits<Type, EntityId> {                                                                    \
         using element_type = Type;                                                                                     \
@@ -66,19 +67,6 @@ ENTT_COMPONENT_TRAITS(VanillaCamera::UpdatePlayerFromCameraComponent)
 ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraOrbitComponent)
 ENTT_COMPONENT_TRAITS(MinecraftCamera::CameraCustomFovComponent)
 ENTT_COMPONENT_TRAITS(CameraAPIComponent)
-
-
-struct RenderRotationComponent {
-public:
-    glm::vec2 mRot;
-};
-
-struct ActorRotationComponent {
-public:
-    glm::vec2 mRot;
-    glm::vec2 mRotPrev;
-};
-
 
 ENTT_COMPONENT_TRAITS(ActorRotationComponent)
 ENTT_COMPONENT_TRAITS(RenderRotationComponent)
