@@ -3,13 +3,13 @@
 //
 
 #pragma once
+#include <cstddef>
 #include <vector>
 
-#include "CameraRegistry.hpp"
 #include "sdk/mc/client/game/ClientInstance.hpp"
+#include "sdk/mc/deps/ecs/EntityId.hpp"
 #include "sdk/mc/deps/game_refs/OwnerPtr.hpp"
 #include "util/memory.hpp"
-#include "sdk/mc/deps/ecs/EntityId.hpp"
 
 class CameraPresets;
 class EcsEventDispatcher;
@@ -35,16 +35,15 @@ namespace SharedTypes::v1_26_50 {
 class CameraRegistry : public Bedrock::EnableNonOwnerReferences {
 public:
     using RegisteredCamera = ::MinecraftCamera::RegisteredCamera;
-    using ComponentInitializer = void (*)(::EntityContext &, ::SharedTypes::v1_21_100::CameraDefinitions const &);
+    using ComponentInitializer = void (*)(::EntityContext&, ::SharedTypes::v1_21_100::CameraDefinitions const&);
 
 public:
-    // these sizes and the offset here doesn't match the game and i have no clue why
     // NOLINTBEGIN
     PAD(0x80);
     PAD(0x110);
-    PAD(0x24);
+    PAD(0x18); // Ok so it turns out that i'm just fucking stupid and forgot the difference between hex and decimal.
     std::vector<::MinecraftCamera::RegisteredCamera> mCameras;
-    std::vector<::OwnerPtr<::EntityId> > mCameraEntities;
+    std::vector<::OwnerPtr<::EntityId>> mCameraEntities;
     OwnerPtr<EntityId> mGameCamera;
     OwnerPtr<EntityId> mDebugCamera;
 

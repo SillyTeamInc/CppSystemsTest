@@ -16,15 +16,16 @@
 #include "sdk/mc/options/option_types/OptionID.hpp"
 #include "sdk/mc/world/actor/Actor.hpp"
 
+#include <imgui.h>
 #include "events/base_tick_event.hpp"
 #include "events/render_event.hpp"
+#include "sdk/mc/deps/minecraft_camera/CameraRegistry.hpp"
 #include "sdk/mc/entity/components/ActorHeadRotationComponent.hpp"
 #include "sdk/mc/entity/components/CameraComponent.hpp"
 #include "sdk/mc/entity/components/CameraDirectLookComponent.hpp"
 #include "sdk/mc/options/option_types/FloatOption.hpp"
-#include "util/option_dumper/option_dumper.hpp"
 #include "system/features/modules/module_system.hpp"
-#include <imgui.h>
+#include "util/option_dumper/option_dumper.hpp"
 
 #include "sdk/mc/options/option_types/IntOption.hpp"
 #include "util/fonts.hpp"
@@ -32,18 +33,19 @@
 
 void test_module::on_enable() {
     log->info("test module enabled");
-    
+
     dispatcher().listen<base_tick_event, &test_module::on_base_tick>(this);
     dispatcher().listen<render_event, &test_module::on_render>(this);
 
     auto ci = core::get_client_instance();
     auto lp = ci->getLocalPlayer();
-    if (!lp) return;
+    if (!lp)
+        return;
 
-    //option_dumper::dump_options();
+    // option_dumper::dump_options();
     /*auto fovSetting = static_cast<FloatOption*>(ci->getOptions().getIfValid(OptionID::GfxFieldOfView).value());
-    spdlog::info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN, fovSetting->VALUE_MAX, fovSetting->mValue, fovSetting->mDefaultValue, fovSetting->DELTA);*/
-
+    spdlog::info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN,
+    fovSetting->VALUE_MAX, fovSetting->mValue, fovSetting->mDefaultValue, fovSetting->DELTA);*/
 }
 
 void test_module::on_disable() {
@@ -62,9 +64,9 @@ namespace {
             ImGui::SetClipboardText(fmt::format("{:p}", ptr).c_str());
         }
     }
-}
+} // namespace
 
-void test_module::on_render(render_event &event) {
+void test_module::on_render(render_event& event) {
 
     ImGui::Begin("test_module");
 
@@ -74,12 +76,11 @@ void test_module::on_render(render_event &event) {
     }
 
 
-
     auto ci = core::get_client_instance();
     auto lp = ci->getLocalPlayer();
 
     if (ImGui::CollapsingHeader("Modules")) {
-        for (auto& module : get_module_system()->modules) {
+        for (auto& module: get_module_system()->modules) {
             std::string name = std::string(module->get_name());
             ImGui::Text("%s: %s", name.c_str(), module->is_enabled() ? "Enabled" : "Disabled");
             ImGui::SameLine();
@@ -94,6 +95,13 @@ void test_module::on_render(render_event &event) {
 
         if (ImGui::Button("Play Sound"))
             ci->playUI("random.orb", 1.f, 1.f);
+
+        auto clientInput = ci->getInput();
+        show_pointer("ClientInput", clientInput);
+
+        for (auto a : ci->getCameraRegistry()->mCameraEntities) {
+            ImGui::TextUnformatted(fmt::format("Camera id {}", a->mEntity.rawId).c_str());
+        }
     }
 
     if (ImGui::CollapsingHeader("Font Tests")) {
@@ -126,7 +134,9 @@ void test_module::on_render(render_event &event) {
             auto headRotComp = lp->mContext.tryGetComponent<ActorHeadRotationComponent>();
             if (headRotComp.has_value()) {
                 show_pointer("ActorHeadRotationComponent", &headRotComp.value());
-                ImGui::TextUnformatted(fmt::format("mYHeadRot={} mYHeadRotO={}", headRotComp->mYHeadRot, headRotComp->mYHeadRotO).c_str());
+                ImGui::TextUnformatted(
+                        fmt::format("mYHeadRot={} mYHeadRotO={}", headRotComp->mYHeadRot, headRotComp->mYHeadRotO)
+                                .c_str());
             } else {
                 ImGui::Text("ActorHeadRotationComponent: Not found");
             }
@@ -150,46 +160,52 @@ void test_module::on_render(render_event &event) {
 
             auto fovSetting = static_cast<FloatOption*>(ci->getOptions().getIfValid(OptionID::GfxFieldOfView).value());
             show_pointer("GfxFieldOfView FloatOption", fovSetting);
-            if (fovSetting) ImGui::TextUnformatted(fmt::format("VALUE_MIN={} VALUE_MAX={} mValue={}", fovSetting->VALUE_MIN, fovSetting->VALUE_MAX, fovSetting->mValue).c_str());
+            if (fovSetting)
+                ImGui::TextUnformatted(fmt::format("VALUE_MIN={} VALUE_MAX={} mValue={}", fovSetting->VALUE_MIN,
+                                                   fovSetting->VALUE_MAX, fovSetting->mValue)
+                                               .c_str());
 
             int i = 0;
-            for (auto &&[id, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
-                MinecraftCamera::CameraDirectLookComponent *compPtr = &component;
+            for (auto&& [id, component]:
+                 lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
+                MinecraftCamera::CameraDirectLookComponent* compPtr = &component;
                 show_pointer(("CameraDirectLookComponent" + std::to_string(i++)).c_str(), compPtr);
                 ImGui::TextUnformatted(fmt::format("mRotRads=({}, {}) mDelta={} mWrap=({}, {})", compPtr->mRotRads.x,
                                                    compPtr->mRotRads.y, compPtr->mDelta, compPtr->mWrap.x,
                                                    compPtr->mWrap.y)
-                                           .c_str());
-                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})", id.rawId,
-                             reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
+                                               .c_str());
+                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})",
+                   id.rawId, reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
                              compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);*/
             }
 
             int j = 0;
-            for (auto &&[id, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
-                MinecraftCamera::CameraComponent *compPtr = &component;
-                show_pointer(("CameraComponent_" + std::string(magic_enum::enum_name(component.getMode())) + std::to_string(j++)).c_str(), compPtr);
+            for (auto&& [id, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
+                MinecraftCamera::CameraComponent* compPtr = &component;
+                show_pointer(("CameraComponent_" + std::string(magic_enum::enum_name(component.getMode())) +
+                              std::to_string(j++))
+                                     .c_str(),
+                             compPtr);
                 ImGui::TextUnformatted(compPtr->to_string().c_str());
-                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})", id.rawId,
-                             reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
+                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})",
+                   id.rawId, reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
                              compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);*/
             }
-
-
         }
     }
 
     auto codes = keyboard::get_all_keys();
     if (ImGui::CollapsingHeader("Keys")) {
         ImGui::Spacing();
-        if (ImGui::BeginTable("##keys", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
-                                           ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchProp)) {
+        if (ImGui::BeginTable("##keys", 3,
+                              ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable |
+                                      ImGuiTableFlags_SizingStretchProp)) {
             ImGui::TableSetupColumn("Enum");
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Code", ImGuiTableColumnFlags_WidthFixed, 60.0f);
             ImGui::TableHeadersRow();
 
-            for (const auto& [key, name] : codes) {
+            for (const auto& [key, name]: codes) {
                 std::string_view keyingIt = magic_enum::enum_name(key);
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
@@ -207,7 +223,7 @@ void test_module::on_render(render_event &event) {
     ImGui::End();
 }
 
-void test_module::on_base_tick(base_tick_event &event) {
+void test_module::on_base_tick(base_tick_event& event) {
 
     /*auto lp = static_cast<LocalPlayer *>(event.actor);
     auto headRotComp = lp->mContext.tryGetComponent<ActorHeadRotationComponent>();
@@ -231,20 +247,16 @@ void test_module::on_base_tick(base_tick_event &event) {
     // CameraComponent
     for (auto&&[i, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
         MinecraftCamera::CameraComponent* compPtr = &component;
-        spdlog::info("id:{:X} CameraComponent:{:X} mId={} mOrientation=({}, {}, {}, {}) mPosition=({}, {}, {}) mAspectRatio={} mFieldOfView={} mNearPlane={} mFarPlane={}",
-                     i.rawId, reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mId.mStr,
-                     compPtr->mOrientation.x, compPtr->mOrientation.y, compPtr->mOrientation.z, compPtr->mOrientation.w,
-                     compPtr->mPosition.x, compPtr->mPosition.y, compPtr->mPosition.z,
-                     compPtr->mAspectRatio, compPtr->mFieldOfView, compPtr->mNearPlane, compPtr->mFarPlane);
+        spdlog::info("id:{:X} CameraComponent:{:X} mId={} mOrientation=({}, {}, {}, {}) mPosition=({}, {}, {})
+    mAspectRatio={} mFieldOfView={} mNearPlane={} mFarPlane={}", i.rawId, reinterpret_cast<std::uintptr_t>(compPtr),
+    compPtr->mId.mStr, compPtr->mOrientation.x, compPtr->mOrientation.y, compPtr->mOrientation.z,
+    compPtr->mOrientation.w, compPtr->mPosition.x, compPtr->mPosition.y, compPtr->mPosition.z, compPtr->mAspectRatio,
+    compPtr->mFieldOfView, compPtr->mNearPlane, compPtr->mFarPlane);
     }
 
     log->info("[test] ok");*/
 }
 
-void test_module::on_manager_init() {
-    log->info("test module initialized");
-}
+void test_module::on_manager_init() { log->info("test module initialized"); }
 
-void test_module::on_manager_exit() {
-    log->info("test module exited");
-}
+void test_module::on_manager_exit() { log->info("test module exited"); }

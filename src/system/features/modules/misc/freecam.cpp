@@ -349,4 +349,4 @@ void Freecam::onLookInputEvent(LookInputEvent& event)
         event.mFirstPersonCamera->mOrigin = getLerpedOrigin();
     }
     mRotRads = event.mCameraDirectLookComponent->mRotRads;
-}*./
+}*/

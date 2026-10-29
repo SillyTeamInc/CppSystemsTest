@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <entt/entt.hpp>
 
+#include "EntityIdType.hpp"
 #include "sdk/mc/deps/core/utility/optional_ref.hpp"
 #include "sdk/mc/deps/minecraft_camera/components/CameraBlendStateComponent.hpp"
 #include "sdk/mc/deps/minecraft_camera/components/CameraRenderFirstPersonObjectsComponent.hpp"
@@ -21,13 +22,6 @@
 
 // see https://bedrock-native-modding.github.io/wiki/entities/entt.html
 
-struct EntityId {
-    std::uint32_t rawId;
-
-    [[nodiscard]] constexpr bool operator==(const EntityId& other) const = default;
-
-    [[nodiscard]] constexpr operator std::uint32_t() const { return this->rawId; }
-};
 
 namespace std {
     template<>
@@ -172,3 +166,6 @@ public:
     entt::basic_registry<EntityId>& mEnTTRegistry;
     EntityId const mEntity;
 };
+
+class OwnerStorageEntity : public std::optional<EntityContext> {};
+class StackResultStorageEntity : public std::optional<EntityContext> {};

@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "EnableNonOwnerReferences.hpp"
+#include "gsl/pointers"
 
 
 namespace Bedrock {
@@ -74,4 +75,6 @@ namespace Bedrock {
             return get() <=> r.get();
         }
     };
+    template <typename T>
+    using NotNullNonOwnerPtr = gsl::not_null<NonOwnerPointer<T>>;
 };

@@ -219,6 +219,8 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/sdk/mc/entity/components/StateVectorComponent.hpp
         src/sdk/mc/entity/components/RenderPositionComponent.hpp
         src/sdk/mc/client/input/Keymapping.hpp
+        src/sdk/mc/client/input/ClientInputHandler.hpp
+        src/sdk/mc/deps/ecs/EntityIdType.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

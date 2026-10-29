@@ -3,17 +3,20 @@
 //
 
 #pragma once
-#include "gsl/algorithm"
+#include <memory>
 
-template <class T>
+#include "gsl/algorithm"
+#include "sdk/mc/deps/ecs/EntityId.hpp"
+
+template<class T>
 struct GameRefs {
-    using OwnerStorage       = std::shared_ptr<T>;
+    using OwnerStorage = std::shared_ptr<T>;
     using StackResultStorage = std::shared_ptr<T>;
-    using WeakStorage        = std::weak_ptr<T>;
-    using StackRef           = T;
+    using WeakStorage = std::weak_ptr<T>;
+    using StackRef = T;
 };
 
-template <typename T>
+template<typename T>
 class OwnerPtr : public GameRefs<T>::OwnerStorage {
 public:
     using Base = GameRefs<T>::OwnerStorage;
@@ -22,7 +25,7 @@ public:
     constexpr OwnerPtr(Base const& ptr) : Base(ptr) {}
     constexpr OwnerPtr(Base&& ptr) : Base(std::move(ptr)) {}
 };
-template <typename T>
+template<typename T>
 class StackRefResult : public GameRefs<T>::StackResultStorage {
 public:
     using Base = GameRefs<T>::StackResultStorage;
@@ -33,7 +36,7 @@ public:
 };
 
 
-template <class T>
+template<class T>
 class WeakRef : public GameRefs<T>::WeakStorage {
 public:
     using Base = GameRefs<T>::WeakStorage;
@@ -52,3 +55,38 @@ public:
     }
 };
 
+
+class EntityContext;
+class EntityRegistry;
+class OwnerStorageEntity;
+class StackResultStorageEntity;
+
+class WeakStorageEntity {
+public:
+    WeakRef<EntityRegistry> mRegistry;
+    EntityId mEntity{};
+};
+
+template<>
+struct GameRefs<EntityContext> {
+    using OwnerStorage = OwnerStorageEntity;
+    using StackResultStorage = StackResultStorageEntity;
+    using WeakStorage = WeakStorageEntity;
+    using StackRef = EntityContext;
+};
+
+template<>
+struct GameRefs<EntityContext const> {
+    using OwnerStorage = OwnerStorageEntity;
+    using StackResultStorage = StackResultStorageEntity;
+    using WeakStorage = WeakStorageEntity;
+    using StackRef = EntityContext const;
+};
+
+template<>
+struct GameRefs<EntityId> {
+    using OwnerStorage = OwnerStorageEntity;
+    using StackResultStorage = StackResultStorageEntity;
+    using WeakStorage = WeakStorageEntity;
+    using StackRef = EntityContext;
+};

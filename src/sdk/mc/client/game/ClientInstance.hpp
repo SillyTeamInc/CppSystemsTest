@@ -8,6 +8,7 @@
 #include "core/sdk_base.hpp"
 #include "glm/vec2.hpp"
 #include "sdk/mc/deps/core/utility/EnableNonOwnerReferences.hpp"
+#include "sdk/mc/deps/core/utility/NonOwnerPointer.hpp"
 #include "util/memory.hpp"
 #include "util/types.hpp"
 
@@ -148,8 +149,7 @@ namespace ApplicationSignal { class ClipboardCopy; }
 namespace ApplicationSignal { class ClipboardPasteRequest; }
 namespace Automation { class AutomationClient; }
 namespace Bedrock {
-template <typename T> class NonOwnerPointer;
-template <typename T> class NotNullNonOwnerPtr;
+
 template <typename T> class UniqueOwnerPointer;
 namespace Input { enum class PointerType; }
 namespace Threading { template <typename T> class Async; }
@@ -230,8 +230,8 @@ public:
     virtual ::BlockSource* getRegion() = 0;
     virtual ::LocalPlayer* getLocalPlayer() const = 0;
     virtual void setupPrimaryClientEditorManager() = 0;
-    virtual ::Bedrock::NonOwnerPointer<::Editor::IEditorPlayer> getLocalEditorPlayer() const = 0;
-    virtual ::Bedrock::NonOwnerPointer<::Editor::IEditorManager> getEditorManager() const = 0;
+    virtual Bedrock::NonOwnerPointer<::Editor::IEditorPlayer> getLocalEditorPlayer() const = 0;
+    virtual Bedrock::NonOwnerPointer<::Editor::IEditorManager> getEditorManager() const = 0;
     virtual bool isPlayerInEditor() const = 0;
     virtual ::LocalPlayerChangedConnector getLocalPlayerChangedConnector() = 0;
     virtual ::WeakEntityRef getLocalUser() const = 0;
