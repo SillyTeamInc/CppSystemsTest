@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Inject" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CppSystemsTest" TARGET_NAME="CppSystemsTest" CONFIG_NAME="Debug" RUN_PATH="$PROJECT_DIR$/inject.sh">
+  <configuration default="false" name="Inject" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="Minecraft.Windows C:\Users\emi\CLionProjects\CppSystemsTest\cmake-build-debug\CppSystemsTest.dll" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CppSystemsTest" TARGET_NAME="CppSystemsTest" CONFIG_NAME="Debug" RUN_PATH="$PROJECT_DIR$/cmake-build-debug/injector.exe">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

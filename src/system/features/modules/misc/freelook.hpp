@@ -12,8 +12,10 @@
 
 
 class EnumOption;
+class module_state_change_event;
 
 class freelook : public module_base<freelook> {
+    friend class freecam;
     EnumOption* m_third_person_opt = nullptr;
 
     int m_last_camera_state = 0;
@@ -26,11 +28,8 @@ public:
 
     explicit freelook() : module_base(info) {}
 
-
-
-
-
     void on_enable() override;
     void on_disable() override;
+    void on_module_state_change(module_state_change_event& event);
     void on_lp_turn(local_player_turn_event& event);
 };

@@ -7,17 +7,11 @@
 // provides easy access to functions without fucking up vtable
 class sdk_base {
 protected:
-    static systems_manager* sysman() {
-        return systems_manager::i();
-    }
+    static systems_manager* sysman();
 
-    static signature_system* sigsys() {
-        return sysman()->get<signature_system>();
-    }
+    static signature_system* sigsys();
 
-    static auto& sigs() {
-        return sigsys()->sigs();
-    }
+    static auto& sigs() { return sigsys()->sigs(); }
 };
 
 #define SDK_CLASS protected sdk_base

@@ -78,4 +78,28 @@ public:
     glm::vec3 mCameraOrientation;
     brstd::bitset<11, ushort> mFlagValues;
     std::array<bool, 2> mIsPaddling;
+
+    [[nodiscard]] bool forward() const {
+        return mInputState.mFlagValues.test(static_cast<std::size_t>(MoveInputState::Flag::Up));
+    }
+
+    [[nodiscard]] bool backward() const {
+        return mInputState.mFlagValues.test(static_cast<std::size_t>(MoveInputState::Flag::Down));
+    }
+
+    [[nodiscard]] bool left() const {
+        return mInputState.mFlagValues.test(static_cast<std::size_t>(MoveInputState::Flag::Left));
+    }
+
+    [[nodiscard]] bool right() const {
+        return mInputState.mFlagValues.test(static_cast<std::size_t>(MoveInputState::Flag::Right));
+    }
+
+    [[nodiscard]] bool jumping() const {
+        return mInputState.mFlagValues.test(static_cast<std::size_t>(MoveInputState::Flag::JumpDown));
+    }
+
+    [[nodiscard]] bool sneaking() const {
+        return mInputState.mFlagValues.test(static_cast<std::size_t>(MoveInputState::Flag::SneakDown));
+    }
 };

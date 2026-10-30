@@ -33,6 +33,14 @@ struct game_signatures {
         sig::reference<"E8 ? ? ? ? E9 ? ? ? ? 31 C0 E9 ? ? ? ? 48 8B ? ? ? ? ? 48 8B", 1> getFov;
     } LevelRendererPlayer;
 
+    struct client_input_handler_t {
+        sig::field_offset<"49 8B ? ? 48 8B ? ? 48 85 ? 0F 84 ? ? ? ? 4C 8B ? ? 48 8B ? ? 48 C1 E9", 3, std::uint8_t> mMappingFactory;
+    } ClientInputHandler;
+
+    struct client_input_mapping_factory_t {
+        sig::field_offset<"48 8B ? ? ? ? ? 48 89 ? ? 48 8B ? ? ? ? ? 48 89 ? ? EB ? 31 C9", 3> mKeyboardRemappingLayout;
+    } ClientInputMappingFactory;
+
     struct mouse_device_t {
         sig::reference<"E8 ? ? ? ? E9 ? ? ? ? 48 8D ? ? ? ? ? 48 89 8D ? ? ? ? C6 85 ? ? ? ? 01 48", 1> feed;
     } MouseDevice;

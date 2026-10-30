@@ -11,8 +11,17 @@
 
 #include "magic_enum.hpp"
 
+class Keymapping;
 
 namespace keyboard {
+    struct keyboard_keymappings_t {
+        Keymapping* operator[](std::string_view action) const;
+    };
+
+    struct keyboard_keymapping_state_t {
+        bool operator[](std::string_view action) const;
+    };
+
     ImGuiKey vk_to_imgui_key(std::uint32_t vk, std::uint8_t scan_code, bool extended);
 
     // https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
@@ -263,4 +272,8 @@ namespace keyboard {
     std::string_view key_to_string(key k);
 
     std::map<key, std::string_view> get_all_keys();
+
+    constexpr keyboard_keymappings_t mapping{};
+    constexpr keyboard_keymapping_state_t state{};
+    bool is_using_move_keys(bool includeSpaceShift);
 } // namespace keyboard

@@ -221,6 +221,10 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/sdk/mc/client/input/Keymapping.hpp
         src/sdk/mc/client/input/ClientInputHandler.hpp
         src/sdk/mc/deps/ecs/EntityIdType.hpp
+        src/core/sdk_base.cpp
+        src/system/core_system.cpp
+        src/sdk/mc/deps/minecraft_camera/components/RedirectCameraInputComponent.hpp
+        src/sdk/mc/deps/minecraft_camera/components/ActiveCameraComponent.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

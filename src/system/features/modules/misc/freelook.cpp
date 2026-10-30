@@ -22,41 +22,49 @@
 #include <spdlog/spdlog.h>
 
 #include "events/local_player_turn_event.hpp"
+#include "events/module_state_change_event.hpp"
+#include "freecam.hpp"
 #include "sdk/mc/entity/components/CameraOrbitComponent.hpp"
+#include "system/features/modules/module_system.hpp"
 
 void freelook::on_enable() {
     dispatcher().listen<local_player_turn_event, &freelook::on_lp_turn>(this);
+    dispatcher().listen<module_state_change_event, &freelook::on_module_state_change>(this);
 
     ClientInstance* ci = core::get_client_instance();
     auto player = ci->getLocalPlayer();
-    if (!player) {
+    auto cameraRegistry = ci->getCameraRegistry();
+
+    if (!player || !cameraRegistry) {
         disable();
         return;
     }
 
     std::size_t cameraCount = 0;
     std::size_t removedUpdateComponents = 0;
-    for (auto&& [id, cameraComponent]: player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
+    auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
+    for (OwnerPtr<EntityId> entity : cameraRegistry->mCameraEntities) {
         ++cameraCount;
+        const auto id = entity->mEntity;
 
-        auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
         if (storage->contains(id)) {
             m_cams[id] = storage->get(id).mUpdateMode;
-
             storage->remove(id);
             ++removedUpdateComponents;
         }
-    }
 
-    for (auto&& [id, cameraComponent]:
-         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
-        m_og_rot_rads[id] = cameraComponent.mRotRads;
-    }
+        if (auto directLook = entity->tryGetComponent<MinecraftCamera::CameraDirectLookComponent>()) {
+            if (!directLook.has_value()) return;
 
-    for (auto&& [id, cameraComponent]:
-         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
-        m_orbit_rots_c[id] = cameraComponent.mCurrentSpherical;
-        m_orbit_rots_i[id] = cameraComponent.mIdealSpherical;
+            m_og_rot_rads[id] = directLook->mRotRads;
+        }
+
+        if (auto orbit = entity->tryGetComponent<MinecraftCamera::CameraOrbitComponent>()) {
+            if (!orbit.has_value()) return;
+
+            m_orbit_rots_c[id] = orbit->mCurrentSpherical;
+            m_orbit_rots_i[id] = orbit->mIdealSpherical;
+        }
     }
 
 
@@ -69,50 +77,47 @@ void freelook::on_enable() {
 }
 
 void freelook::on_disable() {
-    dispatcher().deafen<local_player_turn_event, &freelook::on_lp_turn>(this);
+    dispatcher().deafen_all(this);
     auto player = core::get_client_instance()->getLocalPlayer();
     if (!player) {
         return;
     }
 
-    std::size_t cameraCount = 0;
-    std::size_t restoredUpdateComponents = 0;
-    for (auto&& [id, cameraComponent]: player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
-        ++cameraCount;
+    auto cameraRegistry = core::get_client_instance()->getCameraRegistry();
+    if (!cameraRegistry) {
+        return;
+    }
 
-        auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
+    auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
+    for (OwnerPtr<EntityId> entity : cameraRegistry->mCameraEntities) {
+        const auto id = entity->mEntity;
         if (!storage->contains(id)) {
             auto it = m_cams.find(id);
-            if (it == m_cams.end()) {
-                continue;
+            if (it != m_cams.end()) {
+                storage->emplace(id, VanillaCamera::UpdatePlayerFromCameraComponent(it->second));
             }
-
-            storage->emplace(id, VanillaCamera::UpdatePlayerFromCameraComponent(it->second));
-            ++restoredUpdateComponents;
         }
 
-        ++restoredUpdateComponents;
-    }
+        if (auto directLook = entity->tryGetComponent<MinecraftCamera::CameraDirectLookComponent>()) {
+            if (!directLook.has_value()) return;
 
-    for (auto&& [id, cameraComponent]:
-         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
-        if (!m_og_rot_rads.contains(id)) {
-            log->warn("on_disable: no original rotation found for camera id={}", id.rawId);
-            continue;
+            if (!m_og_rot_rads.contains(id)) {
+                log->warn("on_disable: no original rotation found for camera id={}", id.rawId);
+            } else {
+                directLook->mRotRads = m_og_rot_rads[id];
+            }
         }
 
-        cameraComponent.mRotRads = m_og_rot_rads[id];
-    }
+        if (auto orbit = entity->tryGetComponent<MinecraftCamera::CameraOrbitComponent>()) {
+            if (!orbit.has_value()) return;
 
-    for (auto&& [id, cameraComponent]:
-         player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
-        if (!m_orbit_rots_c.contains(id) || !m_orbit_rots_i.contains(id)) {
-            log->warn("on_disable: no original orbit rotation found for camera id={}", id.rawId);
-            continue;
+            if (!m_orbit_rots_c.contains(id) || !m_orbit_rots_i.contains(id)) {
+                log->warn("on_disable: no original orbit rotation found for camera id={}", id.rawId);
+            } else {
+                orbit->mCurrentSpherical = m_orbit_rots_c[id];
+                orbit->mIdealSpherical = m_orbit_rots_i[id];
+            }
         }
-
-        cameraComponent.mCurrentSpherical = m_orbit_rots_c[id];
-        cameraComponent.mIdealSpherical = m_orbit_rots_i[id];
     }
 
 
@@ -120,25 +125,58 @@ void freelook::on_disable() {
     log->info("freelook disabled and restored");
 }
 
+// TODO: somehow make this functionality into the manager
+void freelook::on_module_state_change(module_state_change_event& event) {
+    auto freecam = get_module_system()->get<::freecam>();
+    if (!freecam) return; // shouldnt happen unless the module isn't registered
+
+    if (static_cast<void*>(event.module) == this) {
+        if (freecam->is_enabled()) {
+            event.cancel();
+            log->info("freelook and freecam are mutually exclusive");;
+        }
+    } else if (static_cast<void*>(event.module) == freecam) {
+        if (m_enabled) {
+            event.cancel();
+            log->info("freelook and freecam are mutually exclusive");
+        }
+    }
+}
+
 void freelook::on_lp_turn(local_player_turn_event& event) {
-    glm::vec2 rot = glm::vec2(event.deltaRots->y, event.deltaRots->x);
-
-    const glm::vec2 deltaRads = glm::radians(rot);
-
-
-    for (auto&& [id, cameraComponent]:
-         event.player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
-        glm::vec2 newRot = glm::vec2(-deltaRads.x, deltaRads.y);
-        cameraComponent.mRotRads += newRot;
+    auto cameraRegistry = core::get_client_instance()->getCameraRegistry();
+    if (!cameraRegistry) {
+        return;
     }
 
-    for (auto&& [id, cameraComponent]:
-         event.player->mContext.mEnTTRegistry.view<MinecraftCamera::CameraOrbitComponent>().each()) {
-        cameraComponent.mCurrentSpherical.mAzimuth += deltaRads.x;
-        cameraComponent.mCurrentSpherical.mPolarAngle =
-                std::clamp(cameraComponent.mCurrentSpherical.mPolarAngle + deltaRads.y, 0.0f, glm::pi<float>());
+    const glm::vec2 deltaRads = glm::radians(glm::vec2(event.deltaRots->y, event.deltaRots->x));
 
-        cameraComponent.mIdealSpherical = cameraComponent.mCurrentSpherical;
+    for (OwnerPtr<EntityId> entity : cameraRegistry->mCameraEntities) {
+        const auto camera = entity->tryGetComponent<MinecraftCamera::CameraComponent>();
+        if (!camera) {
+            continue;
+        }
+
+        switch (camera->getMode()) {
+            case CameraMode::FirstPerson: {
+                if (auto directLook = entity->tryGetComponent<MinecraftCamera::CameraDirectLookComponent>()) {
+                    directLook->mRotRads += glm::vec2(-deltaRads.x, deltaRads.y);
+                }
+                break;
+            }
+            case CameraMode::ThirdPerson:
+            case CameraMode::ThirdPersonFront: {
+                if (auto orbit = entity->tryGetComponent<MinecraftCamera::CameraOrbitComponent>()) {
+                    orbit->mCurrentSpherical.mAzimuth += deltaRads.x;
+                    orbit->mCurrentSpherical.mPolarAngle = std::clamp(
+                            orbit->mCurrentSpherical.mPolarAngle + deltaRads.y, 0.0f, glm::pi<float>());
+                    orbit->mIdealSpherical = orbit->mCurrentSpherical;
+                }
+                break;
+            }
+            default:
+                break;
+        }
     }
 
     event.cancel();

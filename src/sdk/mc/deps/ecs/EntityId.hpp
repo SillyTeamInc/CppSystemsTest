@@ -4,6 +4,7 @@
 #pragma once
 #include <cstdint>
 #include <entt/entt.hpp>
+#include <spdlog/spdlog.h>
 
 #include "EntityIdType.hpp"
 #include "sdk/mc/deps/core/utility/optional_ref.hpp"
@@ -154,6 +155,19 @@ public:
             getRegistry().remove<Type>(entity);
         }
     }
+
+    void logComponents() const {
+        auto const& registry = getRegistry();
+
+        spdlog::info("Entity {} components:", mEntity.rawId);
+
+        for (auto const& [typeId, storage] : registry.storage()) {
+            if (storage.contains(mEntity)) {
+                spdlog::info("  - {} (type ID: {}) (type ptr: {:p})", storage.type().name(), typeId, static_cast<const void*>(&storage.type()));
+            }
+        }
+    }
+
 
     template<typename Type>
     [[nodiscard]] inline entt::basic_registry<EntityId>::storage_for_type<Type>* find_storage() {

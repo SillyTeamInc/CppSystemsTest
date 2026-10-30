@@ -4,11 +4,16 @@
 
 #include "test_module.hpp"
 
+#include <algorithm>
+#include <array>
 #include <fstream>
+#include <string>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 #include "core/core.hpp"
 #include "sdk/mc/client/game/ClientInstance.hpp"
+#include "sdk/mc/client/input/ClientInputHandler.hpp"
 #include "sdk/mc/client/renderer/game/LevelRenderer.hpp"
 #include "sdk/mc/entity/components/MoveInputComponent.hpp"
 #include "sdk/mc/options/IOptionsReader.hpp"
@@ -20,6 +25,7 @@
 #include "events/base_tick_event.hpp"
 #include "events/render_event.hpp"
 #include "sdk/mc/deps/minecraft_camera/CameraRegistry.hpp"
+#include "sdk/mc/deps/minecraft_camera/components/ActiveCameraComponent.hpp"
 #include "sdk/mc/entity/components/ActorHeadRotationComponent.hpp"
 #include "sdk/mc/entity/components/CameraComponent.hpp"
 #include "sdk/mc/entity/components/CameraDirectLookComponent.hpp"
@@ -28,6 +34,8 @@
 #include "util/option_dumper/option_dumper.hpp"
 
 #include "sdk/mc/options/option_types/IntOption.hpp"
+#include "sdk/mc/options/IOptionsReader.hpp"
+
 #include "util/fonts.hpp"
 #include "util/keyboard.hpp"
 
@@ -44,8 +52,50 @@ void test_module::on_enable() {
 
     // option_dumper::dump_options();
     /*auto fovSetting = static_cast<FloatOption*>(ci->getOptions().getIfValid(OptionID::GfxFieldOfView).value());
-    spdlog::info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN,
+    log->info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN,
     fovSetting->VALUE_MAX, fovSetting->mValue, fovSetting->mDefaultValue, fovSetting->DELTA);*/
+
+    log->info("Dumping currently existing components for local player");
+    lp->mContext.logComponents();
+    log->info("Dumping currently existing components for mGameCamera");
+    ci->getCameraRegistry()->mGameCamera->logComponents();
+    if (ci->getCameraRegistry()->mDebugCamera) {
+        log->info("Dumping currently existing components for mDebugCamera");
+        ci->getCameraRegistry()->mDebugCamera->logComponents();
+    }
+    {
+        MinecraftCamera::CameraComponent* gc = ci->getCameraRegistry()->mGameCamera->tryGetComponent<MinecraftCamera::CameraComponent>();
+        if (gc) {
+            log->info("GameCamera mode: {}", static_cast<int>(gc->getMode()));
+        } else {
+            log->info("GameCamera has no CameraComponent");
+        }
+    }
+
+    /*int i = 0;
+    for (auto& r : ci->getCameraRegistry()->mCameras) {
+        log->info("RegisteredCamera{}: {:p}", i++, static_cast<void*>(&r));
+        log->info("RegisteredCamera{} name: {}, id: {}", i, r.mName, r.mId.mStr);
+    }*/
+
+    for (auto cam : ci->getCameraRegistry()->mCameraEntities) {
+        auto camComp = cam->tryGetComponent<MinecraftCamera::CameraComponent>();
+        if (!camComp.has_value()) {
+            continue;
+        }
+
+        std::string camName = camComp->mId.mStr;
+        log->info("Dumping currently existing components for camera {}", camName);
+        cam->logComponents();
+        if (camComp->getMode() == CameraMode::Free) {
+            auto& st = cam->getOrAddComponent<MinecraftCamera::StationaryCameraComponent>();
+            st.mPos = glm::vec3(0, 70, 0);
+            st.mRot = {0, 0};
+            cam->set_flag<MinecraftCamera::OverrideCameraComponent>(true);
+        }
+    }
+
+
 }
 
 void test_module::on_disable() {
@@ -53,6 +103,17 @@ void test_module::on_disable() {
 
     dispatcher().deafen<base_tick_event, &test_module::on_base_tick>(this);
     dispatcher().deafen<render_event, &test_module::on_render>(this);
+    auto ci = core::get_client_instance();
+    if (!ci->getLocalPlayer()) return;
+
+    for (auto cam : ci->getCameraRegistry()->mCameraEntities) {
+        auto camComp = cam->tryGetComponent<MinecraftCamera::CameraComponent>();
+        if (!camComp.has_value()) {
+            continue;
+        }
+
+        cam->set_flag<MinecraftCamera::OverrideCameraComponent>(false);
+    }
 }
 
 namespace {
@@ -96,11 +157,14 @@ void test_module::on_render(render_event& event) {
         if (ImGui::Button("Play Sound"))
             ci->playUI("random.orb", 1.f, 1.f);
 
-        auto clientInput = ci->getInput();
-        show_pointer("ClientInput", clientInput);
+        auto forward = keyboard::mapping["key.forward"];
+        auto forwardState = keyboard::state["key.forward"];
+        ImGui::TextUnformatted(fmt::format("Forward key: {:p} (state: {})", static_cast<void*>(forward), forwardState).c_str());
 
-        for (auto a : ci->getCameraRegistry()->mCameraEntities) {
-            ImGui::TextUnformatted(fmt::format("Camera id {}", a->mEntity.rawId).c_str());
+        CameraRegistry* cameraRegistry = ci->getCameraRegistry();
+        if (cameraRegistry) {
+            auto a = cameraRegistry->mGameCamera->mEntity.rawId;
+            ImGui::TextUnformatted(fmt::format("GameCamera EntityId: {:X}", a).c_str());
         }
     }
 
@@ -174,7 +238,7 @@ void test_module::on_render(render_event& event) {
                                                    compPtr->mRotRads.y, compPtr->mDelta, compPtr->mWrap.x,
                                                    compPtr->mWrap.y)
                                                .c_str());
-                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})",
+                /*log->info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})",
                    id.rawId, reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
                              compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);*/
             }
@@ -187,7 +251,7 @@ void test_module::on_render(render_event& event) {
                                      .c_str(),
                              compPtr);
                 ImGui::TextUnformatted(compPtr->to_string().c_str());
-                /*spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})",
+                /*log->info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})",
                    id.rawId, reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
                              compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);*/
             }
@@ -228,18 +292,18 @@ void test_module::on_base_tick(base_tick_event& event) {
     /*auto lp = static_cast<LocalPlayer *>(event.actor);
     auto headRotComp = lp->mContext.tryGetComponent<ActorHeadRotationComponent>();
     if (!headRotComp.has_value()) {
-        spdlog::warn("[test] ActorHeadRotationComponent not found..?");
+        log->warn("[test] ActorHeadRotationComponent not found..?");
         return;
     }
 
-    spdlog::info("[test] lp:{:X} headRotComponent:{:X} mYHeadRot={} mYHeadRotO={}",
+    log->info("[test] lp:{:X} headRotComponent:{:X} mYHeadRot={} mYHeadRotO={}",
                  reinterpret_cast<std::uintptr_t>(lp), reinterpret_cast<std::uintptr_t>(&headRotComp.value()),
                  headRotComp->mYHeadRot, headRotComp->mYHeadRotO);
 
 
     for (auto &&[id, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraDirectLookComponent>().each()) {
         MinecraftCamera::CameraDirectLookComponent *compPtr = &component;
-        spdlog::info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})", id.rawId,
+        log->info("id:{:X} CameraDirectLookComponent:{:X} mRotRads=({}, {}) mDelta={} mWrap=({}, {})", id.rawId,
                      reinterpret_cast<std::uintptr_t>(compPtr), compPtr->mRotRads.x, compPtr->mRotRads.y,
                      compPtr->mDelta, compPtr->mWrap.x, compPtr->mWrap.y);
     }
@@ -247,7 +311,7 @@ void test_module::on_base_tick(base_tick_event& event) {
     // CameraComponent
     for (auto&&[i, component]: lp->mContext.mEnTTRegistry.view<MinecraftCamera::CameraComponent>().each()) {
         MinecraftCamera::CameraComponent* compPtr = &component;
-        spdlog::info("id:{:X} CameraComponent:{:X} mId={} mOrientation=({}, {}, {}, {}) mPosition=({}, {}, {})
+        log->info("id:{:X} CameraComponent:{:X} mId={} mOrientation=({}, {}, {}, {}) mPosition=({}, {}, {})
     mAspectRatio={} mFieldOfView={} mNearPlane={} mFarPlane={}", i.rawId, reinterpret_cast<std::uintptr_t>(compPtr),
     compPtr->mId.mStr, compPtr->mOrientation.x, compPtr->mOrientation.y, compPtr->mOrientation.z,
     compPtr->mOrientation.w, compPtr->mPosition.x, compPtr->mPosition.y, compPtr->mPosition.z, compPtr->mAspectRatio,

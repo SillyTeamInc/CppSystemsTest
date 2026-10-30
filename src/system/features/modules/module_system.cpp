@@ -6,6 +6,7 @@
 #include "events/keyboard_event.hpp"
 #include "events/mod_tick_event.hpp"
 #include "misc/freelook.hpp"
+#include "misc/freecam.hpp"
 #include "misc/fullbright.hpp"
 #include "misc/sprint.hpp"
 #include "misc/test_module.hpp"
@@ -25,6 +26,7 @@ void module_system::initialize() {
     add<sprint>();
     add<fullbright>();
     add<freelook>();
+    add<freecam>();
     add<zoom>();
 
     for (const auto &module: modules) {

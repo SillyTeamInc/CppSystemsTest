@@ -7,7 +7,36 @@
 #include <map>
 #include <windows.h>
 
+#include "sdk/mc/client/game/ClientInstance.hpp"
+#include "sdk/mc/client/input/ClientInputHandler.hpp"
+#include "sdk/mc/entity/components/MoveInputComponent.hpp"
 #include "spdlog/spdlog.h"
+#include "system/core_system.hpp"
+#include "system/systems_manager.hpp"
+
+Keymapping* keyboard::keyboard_keymappings_t::operator[](std::string_view action) const {
+    ClientInstance* ci = core::get_client_instance();
+
+    auto daInputHandler = ci->getInput();
+    if (!daInputHandler) return nullptr;
+    auto factory = daInputHandler->mMappingFactory;
+    if (!factory) return nullptr;
+    auto layout = factory->getKeyboardRemappingLayout();
+    if (!layout) return nullptr;
+
+    return const_cast<Keymapping*>(layout->get(action));
+}
+bool keyboard::keyboard_keymapping_state_t::operator[](std::string_view action) const {
+    systems_manager* manager = systems_manager::i();
+    const std::unordered_set<uint32>& keys = manager->get<core_system>()->m_pressed_keys;
+    Keymapping* mapping = keyboard::mapping[action];
+    if (!mapping) return false;
+    for (int key : mapping->mKeys) {
+        if (key < 0) key = -key;
+        if (keys.contains(static_cast<uint32>(key))) return true;
+    }
+    return false;
+}
 
 ImGuiKey keyboard::vk_to_imgui_key(std::uint32_t vk, std::uint8_t scan_code, bool extended) {
     if (vk >= 'A' && vk <= 'Z')
@@ -108,6 +137,20 @@ std::map<keyboard::key, std::string_view> keyboard::get_all_keys() {
     }
     return result;
 }
+bool keyboard::is_using_move_keys(bool includeSpaceShift) {
+    ClientInstance* ci = core::get_client_instance();
+    LocalPlayer* lp = ci->getLocalPlayer();
+    if (!lp) return false;
+
+    auto moveInput = lp->mContext.tryGetComponent<MoveInputComponent>();
+    if (!moveInput.has_value()) return false;
+
+    bool isMoving = moveInput->forward() || moveInput->backward() || moveInput->left() || moveInput->right();
+    if (includeSpaceShift) return isMoving || moveInput->jumping() || moveInput->sneaking();
+
+    return isMoving;
+}
+
 
 
 // this is fucking epic

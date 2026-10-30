@@ -20,7 +20,10 @@ class IMinecraftEventing;
 class ResourcePackManager;
 
 namespace MinecraftCamera {
-    struct RegisteredCamera;
+    struct RegisteredCamera {
+        std::string mName;
+        PAD(0x50); // I have no idea what the rest of this is
+    };
 }
 
 namespace SharedTypes::v1_21_100 {
