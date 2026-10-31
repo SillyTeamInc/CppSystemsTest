@@ -227,6 +227,7 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/sdk/mc/deps/minecraft_camera/components/ActiveCameraComponent.hpp
         src/sdk/mc/entity/components/ClientInputLockComponent.hpp
         src/sdk/mc/deps/core/container/EnumSet.hpp
+        src/sdk/mc/client/game/Minecraft.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

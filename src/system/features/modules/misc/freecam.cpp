@@ -10,6 +10,7 @@
 #include "events/module_state_change_event.hpp"
 #include "freelook.hpp"
 #include "sdk/mc/client/game/ClientInstance.hpp"
+#include "sdk/mc/client/game/Minecraft.hpp"
 #include "sdk/mc/deps/minecraft_camera/CameraRegistry.hpp"
 #include "sdk/mc/deps/minecraft_camera/components/ActiveCameraComponent.hpp"
 #include "sdk/mc/entity/components/ClientInputLockComponent.hpp"
@@ -257,13 +258,17 @@ void freecam::on_render(render_event& event) {
     auto cameraRegistry = core::get_client_instance()->getCameraRegistry();
     if (!cameraRegistry) return;
 
+    ClientInstance* ci = core::get_client_instance();
+    Minecraft* mc = ci->getServerData().get();
+    Timer* mSim = mc->mSimTimer;
+
     for (OwnerPtr<EntityId> entity : cameraRegistry->mCameraEntities) {
         const auto camera = entity->tryGetComponent<MinecraftCamera::CameraComponent>();
         if (!camera) continue;
 
         if (camera->getMode() == CameraMode::Free) {
             auto& st = entity->getOrAddComponent<MinecraftCamera::StationaryCameraComponent>();
-            st.mPos =  lerp(m_last_pos, m_pos, ImGui::GetIO().DeltaTime);;
+            st.mPos =  lerp(m_last_pos, m_pos, mSim->mPartialTicks);
         }
     }
 }

@@ -50,50 +50,6 @@ void test_module::on_enable() {
     if (!lp)
         return;
 
-    // option_dumper::dump_options();
-    /*auto fovSetting = static_cast<FloatOption*>(ci->getOptions().getIfValid(OptionID::GfxFieldOfView).value());
-    log->info("VALUE_MIN={} VALUE_MAX={} mValue={} mDefaultValue={} DELTA={}", fovSetting->VALUE_MIN,
-    fovSetting->VALUE_MAX, fovSetting->mValue, fovSetting->mDefaultValue, fovSetting->DELTA);*/
-
-    log->info("Dumping currently existing components for local player");
-    lp->mContext.logComponents();
-    log->info("Dumping currently existing components for mGameCamera");
-    ci->getCameraRegistry()->mGameCamera->logComponents();
-    if (ci->getCameraRegistry()->mDebugCamera) {
-        log->info("Dumping currently existing components for mDebugCamera");
-        ci->getCameraRegistry()->mDebugCamera->logComponents();
-    }
-    {
-        MinecraftCamera::CameraComponent* gc = ci->getCameraRegistry()->mGameCamera->tryGetComponent<MinecraftCamera::CameraComponent>();
-        if (gc) {
-            log->info("GameCamera mode: {}", static_cast<int>(gc->getMode()));
-        } else {
-            log->info("GameCamera has no CameraComponent");
-        }
-    }
-
-    /*int i = 0;
-    for (auto& r : ci->getCameraRegistry()->mCameras) {
-        log->info("RegisteredCamera{}: {:p}", i++, static_cast<void*>(&r));
-        log->info("RegisteredCamera{} name: {}, id: {}", i, r.mName, r.mId.mStr);
-    }*/
-
-    for (auto cam : ci->getCameraRegistry()->mCameraEntities) {
-        auto camComp = cam->tryGetComponent<MinecraftCamera::CameraComponent>();
-        if (!camComp.has_value()) {
-            continue;
-        }
-
-        std::string camName = camComp->mId.mStr;
-        log->info("Dumping currently existing components for camera {}", camName);
-        cam->logComponents();
-        if (camComp->getMode() == CameraMode::Free) {
-            auto& st = cam->getOrAddComponent<MinecraftCamera::StationaryCameraComponent>();
-            st.mPos = glm::vec3(0, 70, 0);
-            st.mRot = {0, 0};
-            cam->set_flag<MinecraftCamera::OverrideCameraComponent>(true);
-        }
-    }
 
 
 }
@@ -106,14 +62,6 @@ void test_module::on_disable() {
     auto ci = core::get_client_instance();
     if (!ci->getLocalPlayer()) return;
 
-    for (auto cam : ci->getCameraRegistry()->mCameraEntities) {
-        auto camComp = cam->tryGetComponent<MinecraftCamera::CameraComponent>();
-        if (!camComp.has_value()) {
-            continue;
-        }
-
-        cam->set_flag<MinecraftCamera::OverrideCameraComponent>(false);
-    }
 }
 
 namespace {
@@ -193,6 +141,7 @@ void test_module::on_render(render_event& event) {
         }
 
         show_pointer("ClientInstance", ci);
+        show_pointer("Minecraft", ci->getServerData().get());
         show_pointer("LocalPlayer", lp);
         if (lp != nullptr) {
             auto headRotComp = lp->mContext.tryGetComponent<ActorHeadRotationComponent>();

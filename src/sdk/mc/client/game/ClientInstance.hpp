@@ -679,6 +679,8 @@ class ClientInstance : public ::IClientInstance,
                        public ::PlayerListener,
                        public ::std::enable_shared_from_this<::ClientInstance>, SDK_CLASS {
 public:
+    SDK_FIELD(mServerData, sigs().ClientInstance.mServerData, Minecraft*);
+
     // NOLINTBEGIN
     virtual ~ClientInstance() /*override*/ = default;
     virtual void onInitMinecraftGame() /*override*/;

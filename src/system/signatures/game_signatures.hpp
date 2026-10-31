@@ -8,18 +8,25 @@
 #include "sdk/mc/client/renderer/game/LevelRenderer.hpp"
 #include "sig.hpp"
 
+
 // sigs should be accurate to their naming convention as well excluding the struct names
 // all sigs here get scanned and don't need to be manually added anywhere else.
 // this is my love letter to boost.pfr
 struct game_signatures {
     struct client_instance_t {
         // This is fucking stupid generating a sig on the func directly gave me an obese ass sig
-        sig::address<"31 C0 C3 CC CC CC CC 48 83 EC", 7> getLocalPlayer;
+        sig::field_offset<"48 8B ? ? ? ? ? E8 ? ? ? ? 88 86 ? ? ? ? 48 8B ? ? ? ? ? 48 8B ? ? ? ? ? E8", 3> mServerData;
+
+        /*sig::address<"31 C0 C3 CC CC CC CC 48 83 EC", 7> getLocalPlayer;
 
         struct v_table_t {
             sig::vtable_index<"48 8B ? ? ? ? ? 48 89 ? FF 15 ? ? ? ? 48 89 ? 48 8B ? 48 8B ? ? ? ? ? 48 89 ? FF 15 ? ? ? ? 48 85 ? 74 ? 49 89", 3> getLocalPlayer;
-        } vTable;
+        } vTable;*/
     } ClientInstance;
+
+    struct minecraft_t {
+        sig::field_offset<"48 8B ? ? ? ? ? 48 8B ? ? ? ? ? 8B 40 ? 89 45 ? 8B 05", 3> mSimTimer; // mRealTimer+0x8
+    } Minecraft;
 
     struct local_player_t {
         // i think this is the name? either this or _applyTurnDelta
