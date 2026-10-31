@@ -12,6 +12,7 @@
 #include "sdk/mc/client/game/ClientInstance.hpp"
 #include "sdk/mc/deps/minecraft_camera/CameraRegistry.hpp"
 #include "sdk/mc/deps/minecraft_camera/components/ActiveCameraComponent.hpp"
+#include "sdk/mc/entity/components/ClientInputLockComponent.hpp"
 #include "sdk/mc/entity/components/RenderPositionComponent.hpp"
 #include "sdk/mc/entity/components/StateVectorComponent.hpp"
 #include "sdk/mc/options/IOptionsReader.hpp"
@@ -27,7 +28,6 @@ void freecam::on_enable() {
     dispatcher().listen<render_event, &freecam::on_render>(this);
     dispatcher().listen<base_tick_event, &freecam::on_base_tick>(this);
 
-
     ClientInstance* ci = core::get_client_instance();
     auto player = ci->getLocalPlayer();
     auto cameraRegistry = ci->getCameraRegistry();
@@ -36,6 +36,14 @@ void freecam::on_enable() {
         disable();
         return;
     }
+    StateVectorComponent* stateVector = player->mContext.tryGetComponent<StateVectorComponent>();
+    ClientInputLockComponent* clientInputLock = player->mContext.tryGetComponent<ClientInputLockComponent>();
+    if (clientInputLock) {
+        clientInputLock->lockAll();
+    } else log->error("missing ClientInputLockComponent");
+
+    m_pos = stateVector->mPos;
+    m_last_pos = stateVector->mPosPrev;
 
     std::size_t cameraCount = 0;
     std::size_t removedUpdateComponents = 0;
@@ -94,6 +102,10 @@ void freecam::on_disable() {
         return;
     }
 
+    ClientInputLockComponent* clientInputLock = player->mContext.tryGetComponent<ClientInputLockComponent>();
+    if (clientInputLock) {
+        clientInputLock->unlockAll();
+    } else log->error("missing ClientInputLockComponent");
 
 
     auto storage = player->mContext.find_storage<VanillaCamera::UpdatePlayerFromCameraComponent>();
@@ -216,16 +228,14 @@ namespace {
     float get_rotation_key_offset(bool raw, bool allow_strafe) {
         auto player = core::get_client_instance()->getLocalPlayer();
         if (!player) return 0;
-        auto moveInput = player->mContext.tryGetComponent<MoveInputComponent>();
-        if (!moveInput.has_value()) return 0;
 
-        bool isMoving = moveInput->forward() || moveInput->backward() || moveInput->left() || moveInput->right();
+        bool w = keyboard::state["key.forward"];
+        bool s = keyboard::state["key.back"];
+        bool a = keyboard::state["key.left"];
+        bool d = keyboard::state["key.right"];
+
+        bool isMoving = w || s || a || d;
         if (!isMoving) return 0;
-
-        bool w = moveInput->forward();
-        bool s = moveInput->backward();
-        bool a = moveInput->left();
-        bool d = moveInput->right();
 
         float yawOffset = 0;
         if (w && a && allow_strafe)
@@ -268,21 +278,23 @@ void freecam::on_base_tick(base_tick_event& event) {
     m_last_pos = m_pos;
 
     glm::vec3 motion = glm::vec3(0, 0, 0);
+    constexpr float speed = 0.3f;
 
-    if (keyboard::is_using_move_keys(true))
+    if (keyboard::is_using_move_keys(false))
     {
-        glm::vec2 calc = get_motion(m_rot.y, 0.1, false, true);
+        glm::vec2 calc = get_motion(m_rot.y, speed, false, true);
         motion.x = calc.x;
         motion.z = calc.y;
-
-        bool isJumping = keyboard::state["key.jump"];
-        bool isSneaking = keyboard::state["key.sneak"];
-
-        if (isJumping)
-            motion.y += 0.1f;
-        else if (isSneaking)
-            motion.y -= 0.1f;
     }
+
+    bool isJumping = keyboard::state["key.jump"];
+    bool isSneaking = keyboard::state["key.sneak"];
+
+    if (isJumping)
+        motion.y += speed;
+    else if (isSneaking)
+        motion.y -= speed;
+
 
     m_pos += motion;
 }
@@ -308,7 +320,7 @@ void freecam::on_render(render_event& event) {
 
         if (camera->getMode() == CameraMode::Free) {
             auto& st = entity->getOrAddComponent<MinecraftCamera::StationaryCameraComponent>();
-            st.mPos = m_pos;
+            st.mPos =  lerp(m_last_pos, m_pos, ImGui::GetIO().DeltaTime);;
         }
     }
 }

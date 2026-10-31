@@ -142,11 +142,15 @@ bool keyboard::is_using_move_keys(bool includeSpaceShift) {
     LocalPlayer* lp = ci->getLocalPlayer();
     if (!lp) return false;
 
-    auto moveInput = lp->mContext.tryGetComponent<MoveInputComponent>();
-    if (!moveInput.has_value()) return false;
+    bool isJumping = keyboard::state["key.jump"];
+    bool isSneaking = keyboard::state["key.sneak"];
+    bool w = keyboard::state["key.forward"];
+    bool s = keyboard::state["key.back"];
+    bool a = keyboard::state["key.left"];
+    bool d = keyboard::state["key.right"];
 
-    bool isMoving = moveInput->forward() || moveInput->backward() || moveInput->left() || moveInput->right();
-    if (includeSpaceShift) return isMoving || moveInput->jumping() || moveInput->sneaking();
+    bool isMoving = w || s || a || d;
+    if (includeSpaceShift) return isMoving || isJumping || isSneaking;
 
     return isMoving;
 }
