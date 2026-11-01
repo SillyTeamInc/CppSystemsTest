@@ -11,6 +11,7 @@
 #include "system/hooks/render_hooks/execute_command_lists_hook.hpp"
 #include "system/hooks/render_hooks/present_hook.hpp"
 #include "system/hooks/render_hooks/resize_buffers_hook.hpp"
+#include "system/hooks/stationary_camera_hook.hpp"
 
 // insert da hooks here !!!
 using hook_system = basic_hook_system<
@@ -18,6 +19,7 @@ using hook_system = basic_hook_system<
     mob_base_tick_hook,
     local_player_turn_hook,
     get_fov_hook,
+    stationary_camera_hook,
     present_hook,
     execute_command_lists_hook,
     resize_buffers_hook,

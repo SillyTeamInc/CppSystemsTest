@@ -9,7 +9,7 @@ class Timer {
 public:
     float mTicksPerSecond;
     int mTicks;
-    float mPartialTicks;
+    float mPartialTicks;//mAlpha
     float mTimeScale;
     float mPassedTime;
     float mFrameStepAlignmentRemainder;

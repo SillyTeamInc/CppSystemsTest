@@ -28,6 +28,11 @@ struct game_signatures {
         sig::field_offset<"48 8B ? ? ? ? ? 48 8B ? ? ? ? ? 8B 40 ? 89 45 ? 8B 05", 3> mSimTimer; // mRealTimer+0x8
     } Minecraft;
 
+    // todo: this name is very wrong
+    struct stationary_camera_system_t {
+        sig::address<"56 48 81 EC ? ? ? ? 48 89 ? 48 8B ? ? ? ? ? 48 31 ? 48 89 ? ? ? ? ? ? 80 B9 88 00 00 00 ? 75 ? 48 89 ? E8 ? ? ? ? 48 8B ? ? 48 89"> tick;
+    } StationaryCameraSystem;
+
     struct local_player_t {
         // i think this is the name? either this or _applyTurnDelta
         // which it wouldn't be probably i don't think the game usually uses _applyTurnDelta
