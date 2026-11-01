@@ -7,11 +7,11 @@
 #include <system/event_system.hpp>
 
 #include "events/stationary_camera_event.hpp"
-void* stationary_camera_hook::detour(void* self) {
-    return original(self);
+void* stationary_camera_hook::detour(void* self, void* regRef) {
+    stationary_camera_event event = {};
+    m_events->dispatcher().post(event);
 
-    /*stationary_camera_event event = {};
-    m_events->dispatcher().post(event);*/
+    return original(self, regRef);
 }
 
 std::uintptr_t stationary_camera_hook::resolve_target() {

@@ -273,31 +273,7 @@ void freecam::on_base_tick(base_tick_event& event) {
 }
 
 void freecam::on_render(render_event& event) {
-    if (!m_enabled)
-        return;
 
-    auto player = core::get_client_instance()->getLocalPlayer();
-    if (!player)
-        return;
-
-    auto cameraRegistry = core::get_client_instance()->getCameraRegistry();
-    if (!cameraRegistry)
-        return;
-
-    ClientInstance* ci = core::get_client_instance();
-    Minecraft* mc = ci->getServerData().get();
-    Timer* mSim = mc->mRealTimer;
-
-    for (OwnerPtr<EntityId> entity: cameraRegistry->mCameraEntities) {
-        const auto camera = entity->tryGetComponent<MinecraftCamera::CameraComponent>();
-        if (!camera)
-            continue;
-
-        if (camera->getMode() == CameraMode::Free) {
-            auto& st = entity->getOrAddComponent<MinecraftCamera::StationaryCameraComponent>();
-            st.mPos = lerp(m_last_pos, m_pos, mSim->mPartialTicks);
-        }
-    }
 }
 
 void freecam::on_sc_tick(stationary_camera_event& event) {
