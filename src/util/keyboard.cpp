@@ -139,6 +139,8 @@ std::map<keyboard::key, std::string_view> keyboard::get_all_keys() {
 }
 bool keyboard::is_using_move_keys(bool includeSpaceShift) {
     ClientInstance* ci = core::get_client_instance();
+    if (!ci->getMouseGrabbed()) return false;
+
     LocalPlayer* lp = ci->getLocalPlayer();
     if (!lp) return false;
 

@@ -21,6 +21,12 @@
 #include "sdk/mc/options/option_types/EnumOption.hpp"
 #include "system/features/modules/module_system.hpp"
 
+// todo: freecam feature list
+//       fix culling
+//       speed adjustment
+//           sprint (3x) and scroll wheel to adjust up and down
+//       fix zoom compatibility (this camera doesnt use getFov)
+
 namespace {
     float get_rotation_key_offset(bool raw, bool allow_strafe) {
         auto player = core::get_client_instance()->getLocalPlayer();
@@ -250,9 +256,10 @@ void freecam::on_module_state_change(module_state_change_event& event) {
 
 
 void freecam::on_base_tick(base_tick_event& event) {
-
     glm::vec3 motion = glm::vec3(0, 0, 0);
     constexpr float speed = 0.8f;
+
+    bool mouseGrabbed = core::get_client_instance()->getMouseGrabbed();
 
     if (keyboard::is_using_move_keys(false)) {
         glm::vec2 calc = get_motion(m_rot.y, speed, false, true);
@@ -260,8 +267,8 @@ void freecam::on_base_tick(base_tick_event& event) {
         motion.z = calc.y;
     }
 
-    bool isJumping = keyboard::state["key.jump"];
-    bool isSneaking = keyboard::state["key.sneak"];
+    bool isJumping = mouseGrabbed && keyboard::state["key.jump"];
+    bool isSneaking = mouseGrabbed && keyboard::state["key.sneak"];
 
     if (isJumping)
         motion.y += speed;
