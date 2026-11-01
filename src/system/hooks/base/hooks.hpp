@@ -4,6 +4,7 @@
 #pragma once
 
 #include "system/hooks/base/hook_system.hpp"
+#include "system/hooks/culling_hook.hpp"
 #include "system/hooks/get_fov_hook.hpp"
 #include "system/hooks/local_player_turn_hook.hpp"
 #include "system/hooks/mob_base_tick_hook.hpp"
@@ -20,6 +21,7 @@ using hook_system = basic_hook_system<
     local_player_turn_hook,
     get_fov_hook,
     stationary_camera_hook,
+    culling_hook,
     present_hook,
     execute_command_lists_hook,
     resize_buffers_hook,

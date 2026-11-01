@@ -45,6 +45,12 @@ struct game_signatures {
         sig::reference<"E8 ? ? ? ? E9 ? ? ? ? 31 C0 E9 ? ? ? ? 48 8B ? ? ? ? ? 48 8B", 1> getFov;
     } LevelRendererPlayer;
 
+    struct level_renderer_camera_listeners_t {
+        // TODO: this probably isn't the correct name as the type in the vtable does not return anything used in RAX
+        //       and this one does for some reason. Man ive got no idea
+        sig::reference<"E8 ? ? ? ? 48 8B ? ? ? ? ? 48 8B ? ? ? ? ? 4C 8D ? ? 48 39", 1> updateLevelCullerType;
+    } LevelRendererCameraListeners;
+
     struct client_input_handler_t {
         sig::field_offset<"49 8B ? ? 48 8B ? ? 48 85 ? 0F 84 ? ? ? ? 4C 8B ? ? 48 8B ? ? 48 C1 E9", 3, std::uint8_t> mMappingFactory;
     } ClientInputHandler;

@@ -231,6 +231,9 @@ add_library(CppSystemsTest SHARED src/main.cpp
         src/system/hooks/stationary_camera_hook.cpp
         src/system/hooks/stationary_camera_hook.hpp
         src/events/stationary_camera_event.hpp
+        src/system/hooks/culling_hook.cpp
+        src/system/hooks/culling_hook.hpp
+        src/events/on_cull_event.hpp
 )
 # this is amazing compared to the embedding i made before lmao
 include(cmake/embed_resources.cmake)

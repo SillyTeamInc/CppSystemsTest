@@ -4,6 +4,7 @@
 #pragma once
 #include <cstdint>
 #include <entt/entt.hpp>
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
 #include "EntityIdType.hpp"
@@ -164,6 +165,19 @@ public:
         for (auto const& [typeId, storage] : registry.storage()) {
             if (storage.contains(mEntity)) {
                 spdlog::info("  - {} (type ID: {}) (type ptr: {:p})", storage.type().name(), typeId, static_cast<const void*>(&storage.type()));
+            }
+        }
+    }
+
+    void renderComponentsForType() const {
+        auto const& registry = getRegistry();
+
+        ImGui::TextUnformatted(fmt::format("Entity {} components:", mEntity.rawId).c_str());
+
+        for (auto const& [typeId, storage] : registry.storage()) {
+            if (storage.contains(mEntity)) {
+                //spdlog::info("  - {} (type ID: {}) (type ptr: {:p})", storage.type().name(), typeId, static_cast<const void*>(&storage.type()));
+                ImGui::TextUnformatted(fmt::format("  - {} (type ID: {}) (type ptr: {:p})", storage.type().name(), typeId, static_cast<const void*>(&storage.type())).c_str());
             }
         }
     }

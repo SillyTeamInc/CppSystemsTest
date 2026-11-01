@@ -130,6 +130,30 @@ void test_module::on_render(render_event& event) {
         }
     }
 
+    if (ImGui::CollapsingHeader("Camera Components")) {
+        ImGui::Spacing();
+
+        if (lp != nullptr) {
+            int i = 0;
+            for (auto cam : ci->getCameraRegistry()->mCameraEntities) {
+                auto cameraComp = cam->tryGetComponent<MinecraftCamera::CameraComponent>();
+                if (cameraComp.has_value()) {
+                    ImGui::TextUnformatted(fmt::format("Camera {}: Mode={}, Position=({}, {}, {}), Orientation=({}, {}, {}, {}) Fov={}",
+                                                       i, cameraComp->mId.mStr,
+                                                       cameraComp->mPosition.x, cameraComp->mPosition.y, cameraComp->mPosition.z,
+                                                       cameraComp->mOrientation.x, cameraComp->mOrientation.y,
+                                                       cameraComp->mOrientation.z, cameraComp->mOrientation.w, cameraComp->mFieldOfView)
+                                               .c_str());
+                    cam->renderComponentsForType();
+                    ImGui::Spacing();
+                } else {
+                    ImGui::TextUnformatted(fmt::format("Camera {}: No CameraComponent found", i).c_str());
+                }
+                ++i;
+            }
+        }
+    }
+
     if (ImGui::CollapsingHeader("Pointers")) {
         ImGui::Spacing();
 

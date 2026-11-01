@@ -9,5 +9,4 @@ namespace MinecraftCamera {
     public:
         float mCustomFov;
     };
-
 }

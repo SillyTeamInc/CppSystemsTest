@@ -4,16 +4,21 @@
 
 #include "freecam.hpp"
 
-#include "../../../../sdk/mc/deps/minecraft_camera/components/RedirectCameraInputComponent.hpp"
 #include "events/base_tick_event.hpp"
+#include "events/cull_event.hpp"
+#include "events/keyboard_event.hpp"
 #include "events/local_player_turn_event.hpp"
 #include "events/module_state_change_event.hpp"
+#include "events/moused_event.hpp"
+#include "events/render_event.hpp"
 #include "events/stationary_camera_event.hpp"
 #include "freelook.hpp"
 #include "sdk/mc/client/game/ClientInstance.hpp"
 #include "sdk/mc/client/game/Minecraft.hpp"
+#include "sdk/mc/client/input/Keymapping.hpp"
 #include "sdk/mc/deps/minecraft_camera/CameraRegistry.hpp"
 #include "sdk/mc/deps/minecraft_camera/components/ActiveCameraComponent.hpp"
+#include "sdk/mc/deps/minecraft_camera/components/RedirectCameraInputComponent.hpp"
 #include "sdk/mc/entity/components/ClientInputLockComponent.hpp"
 #include "sdk/mc/entity/components/RenderPositionComponent.hpp"
 #include "sdk/mc/entity/components/StateVectorComponent.hpp"
@@ -22,10 +27,8 @@
 #include "system/features/modules/module_system.hpp"
 
 // todo: freecam feature list
-//       fix culling
-//       speed adjustment
-//           sprint (3x) and scroll wheel to adjust up and down
 //       fix zoom compatibility (this camera doesnt use getFov)
+//       sounds when speed is increased and decreased
 
 namespace {
     float get_rotation_key_offset(bool raw, bool allow_strafe) {
@@ -96,6 +99,9 @@ void freecam::on_enable() {
     dispatcher().listen<render_event, &freecam::on_render>(this);
     dispatcher().listen<base_tick_event, &freecam::on_base_tick>(this);
     dispatcher().listen<stationary_camera_event, &freecam::on_sc_tick>(this);
+    dispatcher().listen<cull_event, &freecam::on_cull>(this);
+    dispatcher().listen<moused_event, &freecam::on_mouse, hvs::priority::lowest>(this);
+    dispatcher().listen<keyboard_event, &freecam::on_keyboard>(this);
 
     ClientInstance* ci = core::get_client_instance();
     auto player = ci->getLocalPlayer();
@@ -142,8 +148,10 @@ void freecam::on_enable() {
         if (camera->getMode() == CameraMode::Free) {
             entity->set_flag<MinecraftCamera::OverrideCameraComponent>(true);
             auto& st = entity->getOrAddComponent<MinecraftCamera::StationaryCameraComponent>();
+            auto& fov = entity->getOrAddComponent<MinecraftCamera::CameraCustomFovComponent>();
             st.mPos = m_pos;
             st.mRot = m_rot;
+            fov.mCustomFov = 3.f;
         }
 
         if (auto directLook = entity->tryGetComponent<MinecraftCamera::CameraDirectLookComponent>()) {
@@ -169,6 +177,7 @@ void freecam::on_enable() {
 
     log->info("freecam enabled, removed {} UpdatePlayerFromCameraComponents, camera count: {}", removedUpdateComponents,
               cameraCount);
+    m_current_speed = SPEED;
 }
 
 void freecam::on_disable() {
@@ -205,6 +214,8 @@ void freecam::on_disable() {
 
         if (camera && camera->getMode() == CameraMode::Free) {
             entity->set_flag<MinecraftCamera::OverrideCameraComponent>(false);
+
+            camera->mFieldOfView = 3.f;
         }
 
         if (auto directLook = entity->tryGetComponent<MinecraftCamera::CameraDirectLookComponent>()) {
@@ -234,6 +245,35 @@ void freecam::on_disable() {
     m_third_person_opt->mValue = m_last_camera_state;
     log->info("freecam disabled and restored");
 }
+
+void freecam::on_cull(cull_event& event) {
+    // todo: this completely fucks FPS at the cost of the underground rendering correctly
+    //       should consider using a better method
+    event.m_type = 0;
+}
+
+void freecam::on_mouse(moused_event& event) {
+    if (!core::get_client_instance()->getMouseGrabbed())
+        return;
+
+    if (event.action_button_id == 4) {
+        constexpr float step = 0.1f;
+
+        const auto delta = static_cast<int8_t>(event.button_data);
+
+        if (delta != 0) {
+            m_current_speed += (delta > 0 ? step : -step);
+            event.cancel();
+        }
+    }
+
+    // minimum 0 speed
+    if (m_current_speed < 0.f)
+        m_current_speed = 0.f;
+}
+
+void freecam::on_keyboard(keyboard_event& event) {}
+
 // (see the to do in freelook!!!!)
 void freecam::on_module_state_change(module_state_change_event& event) {
     auto freelook = get_module_system()->get<::freelook>();
@@ -244,7 +284,6 @@ void freecam::on_module_state_change(module_state_change_event& event) {
         if (freelook->is_enabled()) {
             event.cancel();
             log->info("freelook and freecam are mutually exclusive");
-            ;
         }
     } else if (static_cast<void*>(event.module) == freelook) {
         if (m_enabled) {
@@ -256,10 +295,15 @@ void freecam::on_module_state_change(module_state_change_event& event) {
 
 
 void freecam::on_base_tick(base_tick_event& event) {
-    glm::vec3 motion = glm::vec3(0, 0, 0);
-    constexpr float speed = 0.8f;
-
     bool mouseGrabbed = core::get_client_instance()->getMouseGrabbed();
+
+    glm::vec3 motion = glm::vec3(0, 0, 0);
+
+    float speed = m_current_speed;
+
+    bool isSprinting = mouseGrabbed && keyboard::state["key.sprint"];
+    if (isSprinting) speed *= 3.f;
+
 
     if (keyboard::is_using_move_keys(false)) {
         glm::vec2 calc = get_motion(m_rot.y, speed, false, true);
@@ -279,13 +323,12 @@ void freecam::on_base_tick(base_tick_event& event) {
     m_pos += motion;
 }
 
-void freecam::on_render(render_event& event) {
-
-}
+void freecam::on_render(render_event& event) {}
 
 void freecam::on_sc_tick(stationary_camera_event& event) {
     auto ci = core::get_client_instance();
-    auto reg = ci->getCameraRegistry().get();;
+    auto reg = ci->getCameraRegistry().get();
+    ;
 
     float a = ci->getServerData()->mSimTimer->mPartialTicks;
 

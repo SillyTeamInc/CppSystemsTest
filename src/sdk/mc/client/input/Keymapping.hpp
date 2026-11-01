@@ -22,6 +22,10 @@ public:
 
     [[nodiscard]] bool isRemappable() const { return mAllowRemap; }
     [[nodiscard]] bool isSharedKey() const { return mIsSharedKey; }
+
+    [[nodiscard]] bool matching(uint32 key) const {
+        return std::ranges::any_of(mKeys, [key](int k) { return k == key; });
+    }
 };
 
 static_assert(sizeof(Keymapping) == 0x40);
